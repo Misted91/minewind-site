@@ -13,7 +13,7 @@ window.__I18N__ = {
     fr: {
       docTitle: 'Codex des Essences — Minewind',
       title: 'Codex des Essences',
-      subtitle: "Cherchez une essence par son nom ou son surnom de clan — prix par palier et effet, en un coup d'œil.",
+      subtitle: "Cherchez une essence par son nom ou son surnom — prix par palier et effet, en un coup d'œil.",
       searchPlaceholder: 'Curse of Living Flames, colf, vamp strike, web eater…',
       idleHeading: 'Échelle des paliers de prix observés sur le serveur',
       randomEssence: 'Essence au hasard',
@@ -43,7 +43,7 @@ window.__I18N__ = {
     en: {
       docTitle: 'Codex of Essences — Minewind',
       title: 'Codex of Essences',
-      subtitle: 'Search for an essence by its name or clan nickname — price tier and effect, at a glance.',
+      subtitle: 'Search for an essence by its name or nickname — price tier and effect, at a glance.',
       searchPlaceholder: 'Curse of Living Flames, colf, vamp strike, web eater…',
       idleHeading: 'Scale of price tiers observed on the server',
       randomEssence: 'Random essence',
@@ -73,7 +73,7 @@ window.__I18N__ = {
     de: {
       docTitle: 'Kodex der Essenzen — Minewind',
       title: 'Kodex der Essenzen',
-      subtitle: 'Suche eine Essenz nach Namen oder Clan-Spitznamen — Preisstufe und Effekt auf einen Blick.',
+      subtitle: 'Suche eine Essenz nach Namen oder Spitznamen — Preisstufe und Effekt auf einen Blick.',
       searchPlaceholder: 'Curse of Living Flames, colf, vamp strike, web eater…',
       idleHeading: 'Skala der auf dem Server beobachteten Preisstufen',
       randomEssence: 'Zufällige Essenz',
@@ -103,7 +103,7 @@ window.__I18N__ = {
     es: {
       docTitle: 'Códice de Esencias — Minewind',
       title: 'Códice de Esencias',
-      subtitle: 'Busca una esencia por su nombre o apodo de clan — nivel de precio y efecto, de un vistazo.',
+      subtitle: 'Busca una esencia por su nombre o apodo — nivel de precio y efecto, de un vistazo.',
       searchPlaceholder: 'Curse of Living Flames, colf, vamp strike, web eater…',
       idleHeading: 'Escala de niveles de precio observados en el servidor',
       randomEssence: 'Esencia al azar',
@@ -133,7 +133,7 @@ window.__I18N__ = {
     it: {
       docTitle: 'Codice delle Essenze — Minewind',
       title: 'Codice delle Essenze',
-      subtitle: "Cerca un'essenza per nome o soprannome di clan — fascia di prezzo ed effetto, in un colpo d'occhio.",
+      subtitle: "Cerca un'essenza per nome o soprannome — fascia di prezzo ed effetto, in un colpo d'occhio.",
       searchPlaceholder: 'Curse of Living Flames, colf, vamp strike, web eater…',
       idleHeading: 'Scala delle fasce di prezzo osservate sul server',
       randomEssence: 'Essenza a caso',

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex des Essences — Minewind</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="grain"></div>
+
+<div class="wrap">
+
+  <div class="lang-switch" id="lang-switch"></div>
+
+  <header class="hero">
+    <div class="eyebrow">Minewind</div>
+    <h1 class="title" data-i18n="title">Codex des Essences</h1>
+    <p class="subtitle" data-i18n="subtitle">Cherchez une essence par son nom ou son surnom de clan — prix par palier et effet, en un coup d'œil.</p>
+    <div class="meta-line" id="meta-line"></div>
+  </header>
+
+  <div class="search-shell">
+    <div class="search-frame">
+      <span class="search-glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.3 4.5 3.5 7.7 8 8-4.5.3-7.7 3.5-8 8-.3-4.5-3.5-7.7-8-8 4.5-.3 7.7-3.5 8-8z"/></svg></span>
+      <input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Curse of Living Flames, colf, vamp strike, web eater…" autocomplete="off" spellcheck="false">
+      <span class="search-count" id="search-count"></span>
+    </div>
+  </div>
+
+  <div id="idle-panel">
+    <div class="idle-heading" data-i18n="idleHeading">Échelle des paliers de prix observés sur le serveur</div>
+    <div class="legend-grid" id="legend-grid"></div>
+    <div class="random-row">
+      <button class="random-btn" id="random-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.3 4.5 3.5 7.7 8 8-4.5.3-7.7 3.5-8 8-.3-4.5-3.5-7.7-8-8 4.5-.3 7.7-3.5 8-8z"/></svg> <span data-i18n="randomEssence">Essence au hasard</span></button>
+      <button class="random-btn" id="surprise-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 4 7V3h4l10.5 10.5"/><path d="m13 19 6-6"/><path d="m16 16 5 5"/><path d="m19.5 20.5 1-1"/></svg> <span data-i18n="randomWeapon">Une arme au hasard</span></button>
+      <button class="random-btn" id="surprise-spell-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.4 4.8 3.6 8 8 8-4.4.4-7.6 3.6-8 8-.4-4.4-3.6-7.6-8-8 4.4-.4 7.6-3.6 8-8z"/></svg> <span data-i18n="randomSpell">Un sort au hasard</span></button>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <footer>
+    <span data-i18n="footer1">Données extraites des fichiers de prix &amp; descriptions Minewind — 256 essences répertoriées.</span><br>
+    <span data-i18n="footer2">Les prix sont des paliers indicatifs issus d'échanges observés par la communauté, pas des valeurs fixes.</span>
+  </footer>
+
+</div>
+
+<script src="assets/data.js"></script>
+<script src="assets/i18n.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

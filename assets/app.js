@@ -37,7 +37,8 @@
     armor: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7.5-3.5 7.5-9.5V5L12 2.5 4.5 5v7.5C4.5 18.5 12 22 12 22z"/></svg>',
     star: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.3 4.5 3.5 7.7 8 8-4.5.3-7.7 3.5-8 8-.3-4.5-3.5-7.7-8-8 4.5-.3 7.7-3.5 8-8z"/></svg>',
     sun: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>',
-    moon: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+    moon: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    book: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z"/></svg>'
   };
   const typeIcon = {
     '✨': ICONS.spell,
@@ -276,6 +277,38 @@
   });
   applyTheme();
 
+  // ---- beginner guide ----
+  const guideToggle = document.getElementById('guide-toggle');
+  const guideBody = document.getElementById('guide-body');
+  let guideOpen = false;
+  function renderGuide(){
+    const g = S.guide || I18N.strings.fr.guide;
+    guideToggle.innerHTML = `${ICONS.book}<span>${escapeHtml(tr('guideTitle'))}</span><span class="guide-caret" aria-hidden="true">▾</span>`;
+    const moneyRows = g.money.rows.map(r =>
+      `<div class="guide-row"><span class="guide-key">${escapeHtml(r[0])}</span><span class="guide-val">${escapeHtml(r[1])}</span></div>`
+    ).join('');
+    guideBody.innerHTML = `
+      <div class="guide-item">
+        <div class="guide-item-title">${escapeHtml(g.money.title)}</div>
+        <p class="guide-item-body">${escapeHtml(g.money.intro)}</p>
+        <div class="guide-rows">${moneyRows}</div>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-title">${escapeHtml(g.essence.title)}</div>
+        <p class="guide-item-body">${escapeHtml(g.essence.body)}</p>
+      </div>
+      <div class="guide-item">
+        <div class="guide-item-title">${escapeHtml(g.dura.title)}</div>
+        <p class="guide-item-body">${escapeHtml(g.dura.body)}</p>
+      </div>`;
+  }
+  guideToggle.addEventListener('click', () => {
+    guideOpen = !guideOpen;
+    guideBody.hidden = !guideOpen;
+    guideToggle.classList.toggle('open', guideOpen);
+    guideToggle.setAttribute('aria-expanded', guideOpen ? 'true' : 'false');
+  });
+
   // ---- language switcher ----
   const langSwitch = document.getElementById('lang-switch');
   function buildLangSwitch(){
@@ -298,6 +331,7 @@
     buildLangSwitch();
     renderMeta();
     renderLegend();
+    renderGuide();
     render();
   }
   langSwitch.addEventListener('click', (ev) => {

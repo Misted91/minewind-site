@@ -38,7 +38,27 @@ window.__I18N__ = {
       typeWeapon: 'Arme',
       typeArmor: 'Armure',
       orLess: 'ou moins',
-      notTraded: 'Pas encore échangé'
+      notTraded: 'Pas encore échangé',
+      guideTitle: 'Guide débutant',
+      guide: {
+        money: {
+          title: 'La monnaie',
+          intro: "Sur le serveur, la monnaie, ce sont les dragon eggs (œufs de dragon).",
+          rows: [
+            ['1d', '1 dragon egg (œuf de dragon)'],
+            ['1s', '1 stack = 64 dragon eggs'],
+            ['1sh', '1 shegg = 1 shulker rempli de dragon eggs = 64 × 27 = 1 728 dragon eggs']
+          ]
+        },
+        essence: {
+          title: 'Les essences',
+          body: "Les essences sont des livres verts qui octroient des pouvoirs. On les applique à une armure ou à une arme à l'aide d'une enclume."
+        },
+        dura: {
+          title: 'Durabilité',
+          body: "Le stuff custom ou doté d'une essence est incassable : sa durabilité se bloque à 1 et ne descend jamais en dessous."
+        }
+      }
     },
     en: {
       docTitle: 'Codex of Essences — Minewind',
@@ -68,7 +88,27 @@ window.__I18N__ = {
       typeWeapon: 'Weapon',
       typeArmor: 'Armor',
       orLess: 'or less',
-      notTraded: 'Not yet traded'
+      notTraded: 'Not yet traded',
+      guideTitle: 'Beginner guide',
+      guide: {
+        money: {
+          title: 'Currency',
+          intro: 'On the server, the currency is dragon eggs.',
+          rows: [
+            ['1d', '1 dragon egg'],
+            ['1s', '1 stack = 64 dragon eggs'],
+            ['1sh', '1 shegg = 1 shulker full of dragon eggs = 64 × 27 = 1,728 dragon eggs']
+          ]
+        },
+        essence: {
+          title: 'Essences',
+          body: 'Essences are green books that grant powers. You apply them to armor or weapons using an anvil.'
+        },
+        dura: {
+          title: 'Durability',
+          body: 'Custom gear or gear with an essence is unbreakable: its durability stops at 1 and never drops below.'
+        }
+      }
     },
     de: {
       docTitle: 'Kodex der Essenzen — Minewind',
@@ -98,7 +138,27 @@ window.__I18N__ = {
       typeWeapon: 'Waffe',
       typeArmor: 'Rüstung',
       orLess: 'oder weniger',
-      notTraded: 'Noch nicht gehandelt'
+      notTraded: 'Noch nicht gehandelt',
+      guideTitle: 'Anfänger-Guide',
+      guide: {
+        money: {
+          title: 'Währung',
+          intro: 'Auf dem Server ist die Währung Dragon Eggs (Dracheneier).',
+          rows: [
+            ['1d', '1 Dragon Egg (Drachenei)'],
+            ['1s', '1 Stack = 64 Dragon Eggs'],
+            ['1sh', '1 Shegg = 1 Shulker voller Dragon Eggs = 64 × 27 = 1.728 Dragon Eggs']
+          ]
+        },
+        essence: {
+          title: 'Essenzen',
+          body: 'Essenzen sind grüne Bücher, die Kräfte verleihen. Du wendest sie mit einem Amboss auf Rüstung oder Waffen an.'
+        },
+        dura: {
+          title: 'Haltbarkeit',
+          body: 'Custom-Ausrüstung oder Ausrüstung mit einer Essenz ist unzerstörbar: Die Haltbarkeit bleibt bei 1 stehen und sinkt nie darunter.'
+        }
+      }
     },
     es: {
       docTitle: 'Códice de Esencias — Minewind',
@@ -128,7 +188,27 @@ window.__I18N__ = {
       typeWeapon: 'Arma',
       typeArmor: 'Armadura',
       orLess: 'o menos',
-      notTraded: 'Aún no intercambiada'
+      notTraded: 'Aún no intercambiada',
+      guideTitle: 'Guía para principiantes',
+      guide: {
+        money: {
+          title: 'La moneda',
+          intro: 'En el servidor, la moneda son los dragon eggs (huevos de dragón).',
+          rows: [
+            ['1d', '1 dragon egg (huevo de dragón)'],
+            ['1s', '1 stack = 64 dragon eggs'],
+            ['1sh', '1 shegg = 1 shulker lleno de dragon eggs = 64 × 27 = 1.728 dragon eggs']
+          ]
+        },
+        essence: {
+          title: 'Las esencias',
+          body: 'Las esencias son libros verdes que otorgan poderes. Se aplican a una armadura o un arma usando un yunque.'
+        },
+        dura: {
+          title: 'Durabilidad',
+          body: 'El equipo personalizado o con una esencia es irrompible: su durabilidad se detiene en 1 y nunca baja de ahí.'
+        }
+      }
     },
     it: {
       docTitle: 'Codice delle Essenze — Minewind',
@@ -158,7 +238,27 @@ window.__I18N__ = {
       typeWeapon: 'Arma',
       typeArmor: 'Armatura',
       orLess: 'o meno',
-      notTraded: 'Non ancora scambiata'
+      notTraded: 'Non ancora scambiata',
+      guideTitle: 'Guida per principianti',
+      guide: {
+        money: {
+          title: 'La valuta',
+          intro: 'Sul server la valuta sono i dragon eggs (uova di drago).',
+          rows: [
+            ['1d', '1 dragon egg (uovo di drago)'],
+            ['1s', '1 stack = 64 dragon eggs'],
+            ['1sh', '1 shegg = 1 shulker pieno di dragon eggs = 64 × 27 = 1.728 dragon eggs']
+          ]
+        },
+        essence: {
+          title: 'Le essenze',
+          body: "Le essenze sono libri verdi che conferiscono poteri. Si applicano a un'armatura o a un'arma usando un'incudine."
+        },
+        dura: {
+          title: 'Durabilità',
+          body: "L'equipaggiamento custom o con un'essenza è indistruttibile: la durabilità si ferma a 1 e non scende mai sotto."
+        }
+      }
     }
   }
 };

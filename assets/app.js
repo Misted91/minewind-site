@@ -35,7 +35,9 @@
     spell: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.4 4.8 3.6 8 8 8-4.4.4-7.6 3.6-8 8-.4-4.4-3.6-7.6-8-8 4.4-.4 7.6-3.6 8-8z"/></svg>',
     weapon: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 4 7V3h4l10.5 10.5"/><path d="m13 19 6-6"/><path d="m16 16 5 5"/><path d="m19.5 20.5 1-1"/></svg>',
     armor: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7.5-3.5 7.5-9.5V5L12 2.5 4.5 5v7.5C4.5 18.5 12 22 12 22z"/></svg>',
-    star: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.3 4.5 3.5 7.7 8 8-4.5.3-7.7 3.5-8 8-.3-4.5-3.5-7.7-8-8 4.5-.3 7.7-3.5 8-8z"/></svg>'
+    star: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.3 4.5 3.5 7.7 8 8-4.5.3-7.7 3.5-8 8-.3-4.5-3.5-7.7-8-8 4.5-.3 7.7-3.5 8-8z"/></svg>',
+    sun: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>',
+    moon: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
   };
   const typeIcon = {
     '✨': ICONS.spell,
@@ -252,6 +254,27 @@
   document.getElementById('random-btn').addEventListener('click', () => pickRandom(() => true));
   document.getElementById('surprise-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('⚔')));
   document.getElementById('surprise-spell-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('✨')));
+
+  // ---- theme toggle (dark / light) ----
+  const THEME_KEY = 'minewind-theme';
+  const themeToggle = document.getElementById('theme-toggle');
+  function detectTheme(){
+    const saved = localStorage.getItem(THEME_KEY);
+    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+  }
+  let theme = detectTheme();
+  function applyTheme(){
+    document.documentElement.setAttribute('data-theme', theme);
+    // show the icon of the theme you'll switch TO
+    themeToggle.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
+    themeToggle.setAttribute('title', theme === 'dark' ? 'Light theme' : 'Dark theme');
+  }
+  themeToggle.addEventListener('click', () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, theme);
+    applyTheme();
+  });
+  applyTheme();
 
   // ---- language switcher ----
   const langSwitch = document.getElementById('lang-switch');

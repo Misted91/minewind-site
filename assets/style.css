@@ -14,24 +14,50 @@
     --sigil-weapon-dim: rgba(226,84,63,0.16);
     --sigil-armor-dim: rgba(95,174,127,0.16);
     --shadow-deep: 0 30px 80px -20px rgba(0,0,0,0.7);
+    --bg-glow-1: rgba(155,109,255,0.10);
+    --bg-glow-2: rgba(212,165,67,0.06);
+    --grain-opacity: 0.05;
+  }
+
+  /* ---------- Light theme (warm parchment) ---------- */
+  html[data-theme="light"]{
+    --ink-deep:#f3ecdb;
+    --ink-panel:#fbf6ea;
+    --ink-panel-2:#fffdf6;
+    --ink-line: rgba(150,110,40,0.22);
+    --parchment:#352f24;
+    --parchment-dim:#6f664f;
+    --gold:#a9791f;
+    --gold-bright:#8a5f12;
+    --sigil-spell:#6b45c4;
+    --sigil-weapon:#c0392b;
+    --sigil-armor:#3f8a5f;
+    --sigil-spell-dim: rgba(107,69,196,0.14);
+    --sigil-weapon-dim: rgba(192,57,43,0.14);
+    --sigil-armor-dim: rgba(63,138,95,0.14);
+    --shadow-deep: 0 24px 60px -26px rgba(90,68,20,0.35);
+    --bg-glow-1: rgba(155,109,255,0.08);
+    --bg-glow-2: rgba(169,121,31,0.10);
+    --grain-opacity: 0.04;
   }
 
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
     background:
-      radial-gradient(ellipse 1200px 700px at 50% -10%, rgba(155,109,255,0.10), transparent 60%),
-      radial-gradient(ellipse 900px 600px at 90% 10%, rgba(212,165,67,0.06), transparent 55%),
+      radial-gradient(ellipse 1200px 700px at 50% -10%, var(--bg-glow-1), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 90% 10%, var(--bg-glow-2), transparent 55%),
       var(--ink-deep);
     color: var(--parchment);
     font-family:'Spectral', serif;
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   /* ambient texture: faint grain via svg noise */
   .grain{
-    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.05; mix-blend-mode:overlay;
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:var(--grain-opacity); mix-blend-mode:overlay;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
@@ -46,6 +72,27 @@
     margin: 0 auto;
     padding: 56px 24px 100px;
   }
+
+  /* ---------- Theme toggle ---------- */
+  .theme-toggle{
+    position:absolute;
+    top:20px;
+    left:24px;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:34px;
+    height:34px;
+    color: var(--parchment-dim);
+    background: var(--ink-panel);
+    border:1px solid var(--ink-line);
+    border-radius:8px;
+    cursor:pointer;
+    transition: all 0.18s ease;
+  }
+  .theme-toggle:hover{ border-color: rgba(212,165,67,0.45); color: var(--gold-bright); }
+  .theme-toggle .ico{ width:17px; height:17px; }
 
   /* ---------- Language switcher ---------- */
   .lang-switch{
@@ -461,6 +508,10 @@
       position:static;
       justify-content:center;
       margin-bottom:18px;
+    }
+    .theme-toggle{
+      position:static;
+      margin:0 auto 12px;
     }
     .price-row{ gap:6px; }
     .price-pill{ min-width:40px; padding:6px 8px;}

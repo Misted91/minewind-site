@@ -18,16 +18,16 @@
   function tr(key){ return (S[key] != null ? S[key] : (I18N.strings.fr[key] || key)); }
   function fmt(str, vars){ return String(str).replace(/\{(\w+)\}/g, (m,k) => (vars && vars[k] != null) ? vars[k] : m); }
 
-  const TYPE_GLYPHS = ['✨','⚔','👕'];
+  const TYPE_KEYS = ['spell','weapon','armor'];
   const typeColor = {
-    '✨': 'var(--sigil-spell)',
-    '⚔': 'var(--sigil-weapon)',
-    '👕': 'var(--sigil-armor)'
+    spell: 'var(--sigil-spell)',
+    weapon: 'var(--sigil-weapon)',
+    armor: 'var(--sigil-armor)'
   };
   const typeLabelKey = {
-    '✨': 'typeSpell',
-    '⚔': 'typeWeapon',
-    '👕': 'typeArmor'
+    spell: 'typeSpell',
+    weapon: 'typeWeapon',
+    armor: 'typeArmor'
   };
 
   // ---- inline SVG icons (replace the emoji glyphs) ----
@@ -41,9 +41,9 @@
     book: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z"/></svg>'
   };
   const typeIcon = {
-    '✨': ICONS.spell,
-    '⚔': ICONS.weapon,
-    '👕': ICONS.armor
+    spell: ICONS.spell,
+    weapon: ICONS.weapon,
+    armor: ICONS.armor
   };
 
   const legendGrid = document.getElementById('legend-grid');
@@ -129,7 +129,7 @@
   function renderCard(e, idx){
     const key = e.name;
     const isOpen = openCardKey === key;
-    const types = (e.type||'').split('').filter(c => TYPE_GLYPHS.includes(c));
+    const types = (e.type||'').split(',').map(s => s.trim()).filter(c => TYPE_KEYS.includes(c));
     const primaryType = types[0] || '';
     const color = typeColor[primaryType] || 'var(--gold)';
 
@@ -253,8 +253,8 @@
   }
 
   document.getElementById('random-btn').addEventListener('click', () => pickRandom(() => true));
-  document.getElementById('surprise-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('⚔')));
-  document.getElementById('surprise-spell-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('✨')));
+  document.getElementById('surprise-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('weapon')));
+  document.getElementById('surprise-spell-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('spell')));
 
   // ---- theme toggle (dark / light) ----
   const THEME_KEY = 'minewind-theme';

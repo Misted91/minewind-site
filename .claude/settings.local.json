@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(node --check assets/app.js)",
-      "Bash(node --check assets/i18n.js)",
-      "PowerShell($f=\"C:\\\\Users\\\\FR20100089\\\\OneDrive - PORCELANOSA GRUPO AIE\\\\Documentos\\\\Stage Aurélien CANTO\\\\minewind-site\\\\assets\"; foreach\\($n in @\\(\"app.js\",\"i18n.js\"\\)\\){ try{ Add-Type -AssemblyName Microsoft.JScript -ErrorAction Stop; $null=[Microsoft.JScript.Eval]::JScriptEvaluate\\(\\(Get-Content \"$f\\\\$n\" -Raw\\),\\(New-Object Microsoft.JScript.Vsa.VsaEngine\\)\\) }catch{}; \"$n exists: $\\(Test-Path \"$f\\\\$n\"\\)\" }; \\(Get-Command node -ErrorAction SilentlyContinue\\).Source)"
-    ]
-  }
-}

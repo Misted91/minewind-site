@@ -524,6 +524,7 @@
     gap:10px;
     margin-top:10px;
   }
+  .guide-body[hidden]{ display:none; }
   .guide-item{
     background: var(--ink-panel);
     border:1px solid var(--ink-line);

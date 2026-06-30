@@ -15,7 +15,13 @@
   }
   let lang = detectLang();
   let S = I18N.strings[lang];
-  function tr(key){ return (S[key] != null ? S[key] : (I18N.strings.fr[key] || key)); }
+  function tr(key){
+    const dig = (obj) => key.split('.').reduce((o, k) => (o && o[k] != null) ? o[k] : undefined, obj);
+    const v = dig(S);
+    if (v != null) return v;
+    const f = dig(I18N.strings.fr);
+    return f != null ? f : key;
+  }
   function fmt(str, vars){ return String(str).replace(/\{(\w+)\}/g, (m,k) => (vars && vars[k] != null) ? vars[k] : m); }
 
   const TYPE_KEYS = ['spell','weapon','armor'];
@@ -333,6 +339,7 @@
     renderLegend();
     renderGuide();
     render();
+    document.dispatchEvent(new CustomEvent('codexlang', { detail: lang }));
   }
   langSwitch.addEventListener('click', (ev) => {
     const btn = ev.target.closest('.lang-btn');

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css?v=20250629h">
+<link rel="stylesheet" href="assets/style.css?v=20250629k">
 <script>
   // set theme before paint to avoid a flash
   try {
@@ -30,6 +30,13 @@
     <p class="subtitle" data-i18n="subtitle">Cherchez une essence par son nom ou son surnom  — prix par palier et effet, en un coup d'œil.</p>
     <div class="meta-line" id="meta-line"></div>
   </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" type="button" data-tab="codex">Codex</button>
+    <button class="tab" type="button" data-tab="build" data-i18n="build.tab">Équipement</button>
+  </nav>
+
+  <div id="codex-view">
 
   <div class="search-shell">
     <div class="search-frame">
@@ -56,6 +63,13 @@
 
   <div id="results"></div>
 
+  </div><!-- /codex-view -->
+
+  <div id="build-view" hidden>
+    <datalist id="ess-datalist"></datalist>
+    <div id="build-inner"></div>
+  </div>
+
   <footer>
     <span data-i18n="footer1">Données extraites des fichiers de prix &amp; descriptions Minewind — 256 essences répertoriées.</span><br>
     <span data-i18n="footer2">Les prix sont des paliers indicatifs issus d'échanges observés par la communauté, pas des valeurs fixes.</span>
@@ -63,8 +77,9 @@
 
 </div>
 
-<script src="assets/data.js?v=20250629h"></script>
-<script src="assets/i18n.js?v=20250629h"></script>
-<script src="assets/app.js?v=20250629h"></script>
+<script src="assets/data.js?v=20250629k"></script>
+<script src="assets/i18n.js?v=20250629k"></script>
+<script src="assets/app.js?v=20250629k"></script>
+<script src="assets/build.js?v=20250629k"></script>
 </body>
 </html>

@@ -58,6 +58,25 @@ window.__I18N__ = {
           title: 'Durabilité',
           body: "Le stuff custom ou doté d'une essence est incassable : sa durabilité se bloque à 1 et ne descend jamais en dessous."
         }
+      },
+      build: {
+        tab: 'Équipement',
+        heading: "Simulateur d'équipement",
+        intro: '3 essences max et 4 âmes max par pièce. Ta configuration est sauvegardée automatiquement sur cet appareil.',
+        essences: 'Essences',
+        souls: 'Âmes',
+        addEssence: 'Essence',
+        addSoul: 'Âme',
+        searchEssence: 'Rechercher une essence…',
+        shopping: "Liste d'achat",
+        shoppingEmpty: "Ajoute des essences à ton équipement pour générer ta liste d'achat.",
+        remaining: 'restantes',
+        acquired: 'acquises',
+        ownedShort: 'Acquise',
+        reset: 'Réinitialiser',
+        resetConfirm: 'Réinitialiser tout ton équipement ? Cette action est irréversible.',
+        level: 'Niv.',
+        slots: { helmet: 'Casque / Tête', chestplate: 'Plastron', leggings: 'Jambières', boots: 'Bottes', offhand: 'Main secondaire' }
       }
     },
     en: {
@@ -108,6 +127,25 @@ window.__I18N__ = {
           title: 'Durability',
           body: 'Custom gear or gear with an essence is unbreakable: its durability stops at 1 and never drops below.'
         }
+      },
+      build: {
+        tab: 'Loadout',
+        heading: 'Gear simulator',
+        intro: 'Up to 3 essences and 4 souls per piece. Your setup is saved automatically on this device.',
+        essences: 'Essences',
+        souls: 'Souls',
+        addEssence: 'Essence',
+        addSoul: 'Soul',
+        searchEssence: 'Search an essence…',
+        shopping: 'Shopping list',
+        shoppingEmpty: 'Add essences to your gear to generate your shopping list.',
+        remaining: 'remaining',
+        acquired: 'owned',
+        ownedShort: 'Owned',
+        reset: 'Reset',
+        resetConfirm: 'Reset your entire loadout? This cannot be undone.',
+        level: 'Lvl',
+        slots: { helmet: 'Helmet / Head', chestplate: 'Chestplate', leggings: 'Leggings', boots: 'Boots', offhand: 'Offhand' }
       }
     },
     de: {
@@ -158,6 +196,25 @@ window.__I18N__ = {
           title: 'Haltbarkeit',
           body: 'Custom-Ausrüstung oder Ausrüstung mit einer Essenz ist unzerstörbar: Die Haltbarkeit bleibt bei 1 stehen und sinkt nie darunter.'
         }
+      },
+      build: {
+        tab: 'Ausrüstung',
+        heading: 'Ausrüstungs-Simulator',
+        intro: 'Max. 3 Essenzen und 4 Seelen pro Teil. Deine Konfiguration wird automatisch auf diesem Gerät gespeichert.',
+        essences: 'Essenzen',
+        souls: 'Seelen',
+        addEssence: 'Essenz',
+        addSoul: 'Seele',
+        searchEssence: 'Essenz suchen…',
+        shopping: 'Einkaufsliste',
+        shoppingEmpty: 'Füge deiner Ausrüstung Essenzen hinzu, um deine Einkaufsliste zu erstellen.',
+        remaining: 'übrig',
+        acquired: 'im Besitz',
+        ownedShort: 'Habe ich',
+        reset: 'Zurücksetzen',
+        resetConfirm: 'Gesamte Ausrüstung zurücksetzen? Das kann nicht rückgängig gemacht werden.',
+        level: 'Stufe',
+        slots: { helmet: 'Helm / Kopf', chestplate: 'Brustpanzer', leggings: 'Beinschutz', boots: 'Stiefel', offhand: 'Nebenhand' }
       }
     },
     es: {
@@ -208,6 +265,25 @@ window.__I18N__ = {
           title: 'Durabilidad',
           body: 'El equipo personalizado o con una esencia es irrompible: su durabilidad se detiene en 1 y nunca baja de ahí.'
         }
+      },
+      build: {
+        tab: 'Equipo',
+        heading: 'Simulador de equipo',
+        intro: 'Máx. 3 esencias y 4 almas por pieza. Tu configuración se guarda automáticamente en este dispositivo.',
+        essences: 'Esencias',
+        souls: 'Almas',
+        addEssence: 'Esencia',
+        addSoul: 'Alma',
+        searchEssence: 'Buscar una esencia…',
+        shopping: 'Lista de compra',
+        shoppingEmpty: 'Añade esencias a tu equipo para generar tu lista de compra.',
+        remaining: 'restantes',
+        acquired: 'adquiridas',
+        ownedShort: 'La tengo',
+        reset: 'Reiniciar',
+        resetConfirm: '¿Reiniciar todo tu equipo? Esta acción no se puede deshacer.',
+        level: 'Nv.',
+        slots: { helmet: 'Casco / Cabeza', chestplate: 'Peto', leggings: 'Grebas', boots: 'Botas', offhand: 'Mano secundaria' }
       }
     },
     it: {
@@ -258,6 +334,25 @@ window.__I18N__ = {
           title: 'Durabilità',
           body: "L'equipaggiamento custom o con un'essenza è indistruttibile: la durabilità si ferma a 1 e non scende mai sotto."
         }
+      },
+      build: {
+        tab: 'Equipaggiamento',
+        heading: 'Simulatore di equipaggiamento',
+        intro: 'Massimo 3 essenze e 4 anime per pezzo. La tua configurazione viene salvata automaticamente su questo dispositivo.',
+        essences: 'Essenze',
+        souls: 'Anime',
+        addEssence: 'Essenza',
+        addSoul: 'Anima',
+        searchEssence: "Cerca un'essenza…",
+        shopping: 'Lista della spesa',
+        shoppingEmpty: 'Aggiungi essenze al tuo equipaggiamento per generare la lista della spesa.',
+        remaining: 'rimanenti',
+        acquired: 'possedute',
+        ownedShort: "Ce l'ho",
+        reset: 'Reimposta',
+        resetConfirm: "Reimpostare tutto l'equipaggiamento? L'azione è irreversibile.",
+        level: 'Liv.',
+        slots: { helmet: 'Elmo / Testa', chestplate: 'Corazza', leggings: 'Gambali', boots: 'Stivali', offhand: 'Mano secondaria' }
       }
     }
   }

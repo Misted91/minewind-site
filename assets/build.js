@@ -88,11 +88,59 @@
   const soulByKey = {};
   SOULS.forEach(s => { soulByKey[s.key] = s; });
 
+  // ---- archetype keyword expansion (used by the "suggested set" generator) ----
+  // Keywords match at word start (prefix), so stems like "explos" catch
+  // "explosion"/"explosive" while short words like "ice" don't match "price".
+  const ARCHETYPE_KW = {
+    tank:    ['resist','resistance','absorb','absorption','protect','protection','barrier','fatigue','untouchable','regen','regeneration','health','heal','shield','knockback','immun','slow','defen','reduce','durab','tough','block'],
+    melee:   ['melee','hit','strike','sword','attack','damage','dealt','blood','crit','lifesteal','vampir','rage','berserk','fertile','ground','close'],
+    archer:  ['arrow','bow','shoot','shot','ranged','range','projectile','pierc','snipe','distance'],
+    summon:  ['summon','minion','pet','wolf','golem','spawn','undead','skeleton','army','creature','beast'],
+    mage:    ['spell','magic','mana','cast','caster','fire','flame','frost','ice','lightning','blast','curse','explos','web','teleport','aoe','area','blood','poison'],
+    speed:   ['speed','swift','haste','dash','movement','move','jump','fly','flying','agil','flee','sprint','teleport'],
+    support: ['heal','regen','aura','team','cleanse','revive','soul']
+  };
+  // preferred essence type per archetype, used as a scoring boost
+  const ARCH_TYPE = { tank:'armor', melee:'weapon', archer:'weapon', mage:'spell', summon:'spell', speed:'armor', support:'armor' };
+  // Base essences every player has regardless of the build (free, already owned).
+  const BASE_ESSENCES = [ { name:'Regeneration', level:3 }, { name:'Absorption', level:3 } ];
+  const BASE_ORDER = ['chestplate','leggings','boots','helmet'];
+
+  const ARCH_SYNONYMS = {
+    tank:'tank', tanky:'tank', defense:'tank', defence:'tank', defensif:'tank', defensive:'tank', survie:'tank', resist:'tank',
+    melee:'melee', mele:'melee', cac:'melee', corps:'melee', sword:'melee', epee:'melee', dps:'melee', warrior:'melee', guerrier:'melee', fighter:'melee',
+    archer:'archer', arc:'archer', bow:'archer', range:'archer', ranged:'archer', distance:'archer', ranger:'archer',
+    mage:'mage', magic:'mage', magique:'mage', caster:'mage', sorcier:'mage', wizard:'mage', sort:'mage', spell:'mage',
+    summon:'summon', summoner:'summon', invocateur:'summon', invocation:'summon', invoc:'summon', pet:'summon', necro:'summon', necromancer:'summon',
+    speed:'speed', vitesse:'speed', rapide:'speed', swift:'speed', mobilite:'speed', mobility:'speed', fast:'speed', pvp:'speed',
+    support:'support', heal:'support', healer:'support', soin:'support', soigneur:'support'
+  };
+
   // ---- state: multiple named sets (persisted) ----
   const SLOTS = ['helmet','chestplate','leggings','boots','offhand'];
   // helmet/head can hold a tool or weapon, so it accepts every essence type
   const SLOT_CAT = { helmet:'any', chestplate:'armor', leggings:'armor', boots:'armor', offhand:'weapon' };
   const MAX_ESS = 3, MAX_SOULS = 4;
+
+  // The head holds ONE item — either a weapon or an armor piece, not a mix.
+  // It locks to a mode as soon as a committing essence is placed.
+  function helmetMode(essList){
+    for (const en of essList){
+      const types = typesOf(essByNorm[norm(en.name)]);
+      if (types.includes('spell')) return 'weapon';          // spells imply a weapon/tool on the head
+      const arm = types.includes('armor'), wep = types.includes('weapon');
+      if (arm && !wep) return 'armor';                       // armor-only essence → armor mode
+      if (wep && !arm) return 'weapon';                      // weapon-only essence → weapon mode
+      // weapon+armor combos don't commit a mode on their own
+    }
+    return null;
+  }
+  // Effective accepted category for a slot given what's already on it.
+  function slotCat(slotKey, slotObj){
+    const base = SLOT_CAT[slotKey];
+    if (base !== 'any') return base;
+    return helmetMode((slotObj && slotObj.essences) || []) || 'any';
+  }
   const BUILDS_KEY = 'minewind-builds';
   const LEGACY_KEY = 'minewind-build';
 
@@ -109,20 +157,24 @@
         if (!s) return;
         let firstSpell = null;
         const seen = new Set();
-        out[k].essences = (s.essences||[])
-          .filter(e => e && e.name && essByNorm[norm(e.name)] && appliesTo(essByNorm[norm(e.name)], SLOT_CAT[k]))
-          .map(e => ({ name: essByNorm[norm(e.name)].name, level: Math.min(5, Math.max(1, e.level||1)), owned: !!e.owned }))
-          .filter(e => {
-            const id = norm(e.name) + '|' + e.level;
-            if (seen.has(id)) return false;                          // same essence + same tier twice
-            if (isSpell(essByNorm[norm(e.name)])){
-              if (firstSpell && firstSpell !== norm(e.name)) return false; // a second, different spell
-              firstSpell = norm(e.name);
-            }
-            seen.add(id);
-            return true;
-          })
-          .slice(0, MAX_ESS);
+        const kept = [];
+        for (const raw of (s.essences || [])){
+          if (!raw || !raw.name) continue;
+          const e = essByNorm[norm(raw.name)];
+          if (!e) continue;
+          if (kept.length >= MAX_ESS) break;
+          if (!appliesTo(e, slotCat(k, { essences: kept }))) continue; // category / helmet-mode lock
+          const level = Math.min(5, Math.max(1, raw.level || 1));
+          const id = norm(e.name) + '|' + level;
+          if (seen.has(id)) continue;                                   // same essence + same tier twice
+          if (isSpell(e)){
+            if (firstSpell && firstSpell !== norm(e.name)) continue;     // a second, different spell
+            firstSpell = norm(e.name);
+          }
+          seen.add(id);
+          kept.push({ name: e.name, level, owned: !!raw.owned });
+        }
+        out[k].essences = kept;
         // soul: one type, quantity 1-4 (convert legacy `souls` array if present)
         let soul = null;
         if (s.soul && soulByKey[s.soul.type]){
@@ -211,7 +263,7 @@
   }
   // Essences a slot can still receive: category filter, single-distinct-spell rule, and a free tier left.
   function allowedEssences(slot){
-    const cat = SLOT_CAT[slot];
+    const cat = slotCat(slot, active().slots[slot]);
     const spellNames = active().slots[slot].essences
       .filter(en => isSpell(essByNorm[norm(en.name)])).map(en => norm(en.name));
     return essences.filter(e =>
@@ -347,6 +399,107 @@
     </div>`;
   }
 
+  // ---- "suggested set" generator (approximate, keyword-based) ----
+  function clampLevel(e, desired){
+    const avail = levelsOf(e.name).map(l => l.lvl);
+    const le = avail.filter(l => l <= desired);
+    return le.length ? le[le.length - 1] : avail[0];
+  }
+  function capLevel(e){
+    const c = parseInt(e.cap || '', 10);
+    return clampLevel(e, c || 5);
+  }
+  // Place the always-present base essences (Regeneration III, Absorption III) as owned.
+  function placeBaseEssences(slots, used){
+    let cursor = 0;
+    BASE_ESSENCES.forEach(b => {
+      const e = essByNorm[norm(b.name)];
+      if (!e || used.has(norm(e.name))) return;
+      for (let i = 0; i < BASE_ORDER.length; i++){
+        const k = BASE_ORDER[(cursor + i) % BASE_ORDER.length];
+        if (appliesTo(e, SLOT_CAT[k]) && slots[k].essences.length < MAX_ESS){
+          slots[k].essences.push({ name:e.name, level: clampLevel(e, b.level), owned:true });
+          used.add(norm(e.name));
+          cursor = cursor + i + 1;
+          break;
+        }
+      }
+    });
+  }
+  function generateSlots(query){
+    const tokens = norm(query).split(/[\s,]+/).filter(Boolean);
+    if (!tokens.length) return null;
+    const kw = new Set();
+    const archTypes = new Set(); // preferred essence types from detected archetypes
+    tokens.forEach(tk => {
+      kw.add(tk);
+      const arch = ARCH_SYNONYMS[tk];
+      if (arch && ARCHETYPE_KW[arch]){
+        ARCHETYPE_KW[arch].forEach(w => kw.add(w));
+        if (ARCH_TYPE[arch]) archTypes.add(ARCH_TYPE[arch]);
+      }
+    });
+    const keywords = [...kw].filter(k => k.length >= 3);
+    if (!keywords.length) return null;
+    // precompile a word-start (prefix) matcher per keyword to avoid substring noise
+    const matchers = keywords.map(k => new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    const score = e => {
+      const name = norm(e.name), desc = norm(e.description || ''), al = (e.aliases||[]).map(norm).join(' ');
+      let s = 0;
+      matchers.forEach(re => {
+        if (re.test(name)) s += 3;
+        else if (re.test(al)) s += 2;
+        else if (re.test(desc)) s += 1;
+      });
+      if (s > 0 && archTypes.size){
+        const types = typesOf(e);
+        if (types.some(t => archTypes.has(t))) s += 2; // matches the archetype's preferred type
+      }
+      return s;
+    };
+    const scored = essences.map(e => ({ e, s: score(e) }))
+      .filter(x => x.s > 0)
+      .sort((a,b) => b.s - a.s || a.e.name.localeCompare(b.e.name));
+    if (!scored.length) return null;
+
+    // a soul if a soul name was typed
+    let soulKey = null;
+    for (const tk of tokens){
+      const s = SOULS.find(s => s.key === tk || norm(s.label) === tk);
+      if (s){ soulKey = s.key; break; }
+    }
+
+    const slots = emptySlots();
+    const used = new Set();
+    placeBaseEssences(slots, used); // Regeneration III + Absorption III, marked owned
+    SLOTS.forEach(k => {
+      let spellUsed = slots[k].essences.some(en => isSpell(essByNorm[norm(en.name)]));
+      for (const { e } of scored){
+        if (slots[k].essences.length >= MAX_ESS) break;
+        const nn = norm(e.name);
+        if (used.has(nn)) continue;
+        if (!appliesTo(e, slotCat(k, slots[k]))) continue; // re-check: helmet locks as it fills
+        if (isSpell(e)){ if (spellUsed) continue; spellUsed = true; }
+        slots[k].essences.push({ name: e.name, level: capLevel(e), owned: false });
+        used.add(nn);
+      }
+      if (soulKey) slots[k].soul = { type: soulKey, count: MAX_SOULS };
+    });
+    return slots;
+  }
+  function applyGenerated(query){
+    const slots = generateSlots(query);
+    if (!slots) return false;
+    const cur = active();
+    const nonEmpty = SLOTS.some(k => cur.slots[k].essences.length || cur.slots[k].soul);
+    if (nonEmpty && !confirm(tr('build.generateConfirm'))) return false;
+    cur.slots = slots;
+    cur.name = (query.trim().slice(0, 40)) || cur.name;
+    openPicker = null;
+    save(); renderBuild();
+    return true;
+  }
+
   // essences that stack across the whole loadout (Untouchable) -> one combined effect
   function setEffectsMarkup(){
     const totals = {};
@@ -388,6 +541,11 @@
           <button class="build-reset" type="button" id="build-reset">${escapeHtml(tr('build.reset'))}</button>
         </div>
       </div>
+      <div class="suggest">
+        <input id="suggest-input" class="suggest-input" type="text" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(tr('build.suggestPlaceholder'))}">
+        <button id="suggest-go" class="suggest-go" type="button">${escapeHtml(tr('build.generate'))}</button>
+      </div>
+      <p class="suggest-note">${escapeHtml(tr('build.suggestNote'))}</p>
       <div class="slots">${slotsHtml}</div>
       ${setEffectsMarkup()}
       ${shoppingMarkup()}
@@ -404,8 +562,8 @@
   function addEssence(slot, name){
     const e = essByNorm[norm(name)];
     if (!e) return false;
-    if (!appliesTo(e, SLOT_CAT[slot])) return false; // weapon-only on armor (or vice-versa)
     const s = active().slots[slot];
+    if (!appliesTo(e, slotCat(slot, s))) return false; // category + helmet weapon/armor lock
     if (s.essences.length >= MAX_ESS) return false;
     // only one DISTINCT spell per item (the same spell may still be stacked at other tiers)
     if (isSpell(e) && s.essences.some(en => isSpell(essByNorm[norm(en.name)]) && norm(en.name) !== norm(e.name))) return false;
@@ -426,6 +584,11 @@
       return;
     }
     if (t.closest('[data-set-add]')){ addSet(); return; }
+    if (t.closest('#suggest-go')){
+      const inp = buildInner.querySelector('#suggest-input');
+      if (inp) applyGenerated(inp.value);
+      return;
+    }
     if (t.closest('#set-delete')){
       if (confirm(tr('build.deleteSetConfirm'))) deleteSet(builds.activeId);
       return;
@@ -494,12 +657,15 @@
     }
   });
 
-  // Enter in the essence picker
+  // Enter in the essence picker / the suggest input
   buildView.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter' && ev.target.classList.contains('ess-input')){
       ev.preventDefault();
       const slot = ev.target.getAttribute('data-slot');
       if (addEssence(slot, ev.target.value)){ openPicker = null; renderBuild(); }
+    } else if (ev.key === 'Enter' && ev.target.id === 'suggest-input'){
+      ev.preventDefault();
+      applyGenerated(ev.target.value);
     } else if (ev.key === 'Escape' && openPicker){
       openPicker = null; renderBuild();
     }

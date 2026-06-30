@@ -1,0 +1,53 @@
+# CLAUDE.md — Codex des Essences (Minewind)
+
+Site **statique** vanilla (HTML/CSS/JS), **sans build, sans framework, sans
+dépendances**. On ouvre `index.html` directement (compatible `file://`) ou on
+sert le dossier. Pas d'étape de compilation.
+
+## Structure
+
+- `index.html` — page unique. Charge les CSS puis les JS **dans un ordre qui
+  compte** (voir plus bas).
+- `assets/css/` — styles découpés par responsabilité :
+  - `base.css` : variables (`:root`), thèmes clair/sombre, reset, layout, icônes
+  - `chrome.css` : bouton thème, sélecteur de langue, hero, onglets, footer
+  - `codex.css` : onglet Codex (recherche, légende, boutons aléatoires, cartes)
+  - `build.css` : onglet Équipement (sets, slots, âmes, liste d'achat)
+  - `responsive.css` : media queries + reduced-motion — **chargé en dernier**
+- `assets/js/`
+  - `data.js` : données des essences. **Généré** — ne pas éditer à la main.
+  - `i18n/{fr,en,de,es,it}.js` : chaînes d'UI, une langue par fichier ; chacune
+    remplit `window.__I18N_STRINGS__[code]`.
+  - `i18n/index.js` : assemble `window.__I18N__` ; **se charge après** les langues.
+  - `codex.js` : logique onglet Codex (recherche, cartes, thème, guide, langue).
+  - `build.js` : logique onglet Équipement (sets multiples, slots, liste d'achat).
+- `csv/` : sources brutes (`prices`, `aliases`, `explanations`) ayant servi à
+  produire `data.js`.
+- `README.md` : doc utilisateur de la structure.
+
+## Conventions
+
+- **Scripts en globals, pas d'ES modules.** Chaque JS est une IIFE qui lit/écrit
+  des globals (`window.__MINEWIND_DATA__`, `window.__I18N__`). Garder des
+  `<script>` classiques pour rester compatible `file://`. Ne pas introduire
+  `import`/`export` sans passer le site sous serveur HTTP.
+- **i18n** : seules les chaînes d'interface sont traduites. Les noms/descriptions
+  d'essences restent tels quels. Les valeurs de légende sont stockées en français
+  dans `data.js` ; chaque langue fournit `orLess` / `notTraded` pour traduire les
+  fragments. `codex.js` et `build.js` partagent l'état de langue via l'événement
+  `codexlang`.
+- **Cache-busting** : les URLs d'assets portent `?v=AAAAMMJJx`. Incrémenter ce
+  suffixe (dans `index.html`) à chaque modif d'un fichier pour forcer le
+  rechargement navigateur.
+- **Persistance** : `localStorage` (`minewind-theme`, `minewind-lang`,
+  `minewind-tab`, `minewind-builds`). `build.js` migre l'ancien format
+  `minewind-build` → `minewind-builds`.
+
+## Ordre de chargement (à préserver)
+
+- CSS : `base → chrome → codex → build → responsive`.
+- JS : `data → i18n/{langues} → i18n/index → codex → build`.
+
+## Pas de tests / lint / CI
+
+Vérification = ouvrir `index.html` dans un navigateur. Aucun runner configuré.

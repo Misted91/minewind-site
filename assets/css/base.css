@@ -1,0 +1,85 @@
+/* ==========================================================================
+   base.css — design tokens, theming, reset and page layout
+   ========================================================================== */
+
+:root{
+  --bg:#0b0c0e;
+  --panel:#141518;
+  --panel-2:#1a1c20;
+  --border: rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.17);
+  --text:#e7e8ea;
+  --text-dim:#9197a1;
+  --text-faint:#6a6f78;
+  --accent:#6e8bff;
+  --accent-text:#9db0ff;
+  --accent-soft: rgba(110,139,255,0.12);
+  --gold: var(--accent); /* legacy alias used as JS fallback */
+  --sigil-spell:#9b8cff;
+  --sigil-weapon:#ef6f63;
+  --sigil-armor:#54c98b;
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -14px rgba(0,0,0,0.5);
+  --radius:10px;
+  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+
+/* ---------- Light theme ---------- */
+html[data-theme="light"]{
+  --bg:#ffffff;
+  --panel:#ffffff;
+  --panel-2:#f5f6f8;
+  --border: rgba(0,0,0,0.10);
+  --border-strong: rgba(0,0,0,0.18);
+  --text:#17181b;
+  --text-dim:#595f68;
+  --text-faint:#878d96;
+  --accent:#4f6bf6;
+  --accent-text:#3f57d8;
+  --accent-soft: rgba(79,107,246,0.10);
+  --sigil-spell:#7c5cf0;
+  --sigil-weapon:#d8473c;
+  --sigil-armor:#1f9d57;
+  --shadow: 0 1px 2px rgba(20,20,40,0.06), 0 10px 30px -18px rgba(20,20,40,0.18);
+}
+
+/* ---------- Reset ---------- */
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size:15px;
+  line-height:1.5;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.grain{ display:none; }
+
+a{ color: var(--accent-text); text-decoration:none; }
+a:hover{ text-decoration:underline; }
+::selection{ background: var(--accent-soft); }
+
+/* ---------- Layout ---------- */
+.wrap{
+  position:relative;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 40px 24px 100px;
+}
+
+/* ---------- Icons ---------- */
+.ico{
+  width:1em; height:1em;
+  display:inline-block;
+  vertical-align:-0.14em;
+  flex:none;
+}
+.type-badge{
+  display:inline-flex;
+  align-items:center;
+  font-size:15px;
+}

@@ -1,0 +1,17 @@
+/* ==========================================================================
+   responsive.css — media queries and motion preferences (load last)
+   ========================================================================== */
+
+@media (max-width: 600px){
+  .wrap{ padding: 64px 16px 80px; }
+  .theme-toggle{ top:16px; left:16px; }
+  .lang-switch{ top:16px; right:16px; }
+  .price-pill{ min-width:40px; padding:6px 8px; }
+  .build-head{ flex-direction:column; }
+  .slots{ grid-template-columns:1fr; }
+  .buy-slot{ display:none; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
+}

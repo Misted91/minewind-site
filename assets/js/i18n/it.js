@@ -1,0 +1,78 @@
+// Italian UI strings. See i18n/index.js for how these are assembled.
+window.__I18N_STRINGS__ = window.__I18N_STRINGS__ || {};
+window.__I18N_STRINGS__.it = {
+  docTitle: 'Codice delle Essenze — Minewind',
+  title: 'Codice delle Essenze',
+  subtitle: "Cerca un'essenza per nome o soprannome — fascia di prezzo ed effetto, in un colpo d'occhio.",
+  searchPlaceholder: 'Curse of Living Flames, colf, vamp strike, web eater…',
+  idleHeading: 'Scala delle fasce di prezzo osservate sul server',
+  randomEssence: 'Essenza a caso',
+  randomWeapon: "Un'arma a caso",
+  randomSpell: 'Un incantesimo a caso',
+  rerollLabel: 'Rilancia:',
+  footer1: 'Dati estratti dai file di prezzi e descrizioni di Minewind — {n} essenze catalogate.',
+  footer2: 'I prezzi sono fasce indicative dagli scambi osservati dalla community, non valori fissi.',
+  essencesWord: 'essenze',
+  metaUpdated: 'prezzi aggiornati',
+  metaDiscord: 'discord degli scambi',
+  resultOne: '1 risultato',
+  resultMany: '{n} risultati',
+  emptyMsg: 'Nessuna essenza porta questo nome nel codice.',
+  emptyHint: "Prova un'abbreviazione di clan o controlla l'ortografia.",
+  capNote: 'Fascia massima osservata: {cap} (livello {lvl})',
+  labelAliases: 'Soprannomi / abbreviazioni',
+  labelSoul: 'Tipo di anima richiesto',
+  labelSection: 'Categoria di chiave',
+  labelLevels: "Livelli d'effetto",
+  levelWord: 'Livello',
+  typeSpell: 'Incantesimo',
+  typeWeapon: 'Arma',
+  typeArmor: 'Armatura',
+  orLess: 'o meno',
+  notTraded: 'Non ancora scambiata',
+  guideTitle: 'Guida per principianti',
+  guide: {
+    money: {
+      title: 'La valuta',
+      intro: 'Sul server la valuta sono i dragon eggs (uova di drago).',
+      rows: [
+        ['1d', '1 dragon egg (uovo di drago)'],
+        ['1s', '1 stack = 64 dragon eggs'],
+        ['1sh', '1 shegg = 1 shulker pieno di dragon eggs = 64 × 27 = 1.728 dragon eggs']
+      ]
+    },
+    essence: {
+      title: 'Le essenze',
+      body: "Le essenze sono libri verdi che conferiscono poteri. Si applicano a un'armatura o a un'arma usando un'incudine."
+    },
+    dura: {
+      title: 'Durabilità',
+      body: "L'equipaggiamento custom o con un'essenza è indistruttibile: la durabilità si ferma a 1 e non scende mai sotto."
+    }
+  },
+  build: {
+    tab: 'Equipaggiamento',
+    newSet: 'Nuovo set',
+    setEffect: "Effetto del set (cumulato sull'intero equipaggiamento)",
+    setName: 'Nome del set',
+    deleteSet: 'Elimina',
+    deleteSetConfirm: 'Eliminare questo set?',
+    defaultSetName: 'Set',
+    heading: 'Simulatore di equipaggiamento',
+    intro: 'Massimo 3 essenze e 4 anime per pezzo. La tua configurazione viene salvata automaticamente su questo dispositivo.',
+    essences: 'Essenze',
+    souls: 'Anime',
+    addEssence: 'Essenza',
+    addSoul: 'Anima',
+    searchEssence: "Cerca un'essenza…",
+    shopping: 'Lista della spesa',
+    shoppingEmpty: 'Aggiungi essenze al tuo equipaggiamento per generare la lista della spesa.',
+    remaining: 'rimanenti',
+    acquired: 'possedute',
+    ownedShort: "Ce l'ho",
+    reset: 'Reimposta',
+    resetConfirm: "Reimpostare tutto l'equipaggiamento? L'azione è irreversibile.",
+    level: 'Liv.',
+    slots: { helmet: 'Elmo / Testa', chestplate: 'Corazza', leggings: 'Gambali', boots: 'Stivali', offhand: 'Mano secondaria' }
+  }
+};

@@ -1,0 +1,78 @@
+// Spanish UI strings. See i18n/index.js for how these are assembled.
+window.__I18N_STRINGS__ = window.__I18N_STRINGS__ || {};
+window.__I18N_STRINGS__.es = {
+  docTitle: 'Códice de Esencias — Minewind',
+  title: 'Códice de Esencias',
+  subtitle: 'Busca una esencia por su nombre o apodo — nivel de precio y efecto, de un vistazo.',
+  searchPlaceholder: 'Curse of Living Flames, colf, vamp strike, web eater…',
+  idleHeading: 'Escala de niveles de precio observados en el servidor',
+  randomEssence: 'Esencia al azar',
+  randomWeapon: 'Un arma al azar',
+  randomSpell: 'Un hechizo al azar',
+  rerollLabel: 'Volver a tirar:',
+  footer1: 'Datos extraídos de los archivos de precios y descripciones de Minewind — {n} esencias catalogadas.',
+  footer2: 'Los precios son niveles indicativos de intercambios observados por la comunidad, no valores fijos.',
+  essencesWord: 'esencias',
+  metaUpdated: 'precios actualizados',
+  metaDiscord: 'discord de intercambio',
+  resultOne: '1 resultado',
+  resultMany: '{n} resultados',
+  emptyMsg: 'Ninguna esencia lleva ese nombre en el códice.',
+  emptyHint: 'Prueba una abreviatura de clan o revisa la ortografía.',
+  capNote: 'Nivel máximo observado: {cap} (nivel {lvl})',
+  labelAliases: 'Apodos / abreviaturas',
+  labelSoul: 'Tipo de alma requerida',
+  labelSection: 'Categoría de llave',
+  labelLevels: 'Niveles de efecto',
+  levelWord: 'Nivel',
+  typeSpell: 'Hechizo',
+  typeWeapon: 'Arma',
+  typeArmor: 'Armadura',
+  orLess: 'o menos',
+  notTraded: 'Aún no intercambiada',
+  guideTitle: 'Guía para principiantes',
+  guide: {
+    money: {
+      title: 'La moneda',
+      intro: 'En el servidor, la moneda son los dragon eggs (huevos de dragón).',
+      rows: [
+        ['1d', '1 dragon egg (huevo de dragón)'],
+        ['1s', '1 stack = 64 dragon eggs'],
+        ['1sh', '1 shegg = 1 shulker lleno de dragon eggs = 64 × 27 = 1.728 dragon eggs']
+      ]
+    },
+    essence: {
+      title: 'Las esencias',
+      body: 'Las esencias son libros verdes que otorgan poderes. Se aplican a una armadura o un arma usando un yunque.'
+    },
+    dura: {
+      title: 'Durabilidad',
+      body: 'El equipo personalizado o con una esencia es irrompible: su durabilidad se detiene en 1 y nunca baja de ahí.'
+    }
+  },
+  build: {
+    tab: 'Equipo',
+    newSet: 'Nuevo set',
+    setEffect: 'Efecto de conjunto (acumulado en todo el equipo)',
+    setName: 'Nombre del set',
+    deleteSet: 'Eliminar',
+    deleteSetConfirm: '¿Eliminar este set?',
+    defaultSetName: 'Set',
+    heading: 'Simulador de equipo',
+    intro: 'Máx. 3 esencias y 4 almas por pieza. Tu configuración se guarda automáticamente en este dispositivo.',
+    essences: 'Esencias',
+    souls: 'Almas',
+    addEssence: 'Esencia',
+    addSoul: 'Alma',
+    searchEssence: 'Buscar una esencia…',
+    shopping: 'Lista de compra',
+    shoppingEmpty: 'Añade esencias a tu equipo para generar tu lista de compra.',
+    remaining: 'restantes',
+    acquired: 'adquiridas',
+    ownedShort: 'La tengo',
+    reset: 'Reiniciar',
+    resetConfirm: '¿Reiniciar todo tu equipo? Esta acción no se puede deshacer.',
+    level: 'Nv.',
+    slots: { helmet: 'Casco / Cabeza', chestplate: 'Peto', leggings: 'Grebas', boots: 'Botas', offhand: 'Mano secundaria' }
+  }
+};

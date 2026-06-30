@@ -67,47 +67,90 @@
   const soulByKey = {};
   SOULS.forEach(s => { soulByKey[s.key] = s; });
 
-  // ---- state (persisted) ----
+  // ---- state: multiple named sets (persisted) ----
   const SLOTS = ['helmet','chestplate','leggings','boots','offhand'];
   const MAX_ESS = 3, MAX_SOULS = 4;
-  const BUILD_KEY = 'minewind-build';
+  const BUILDS_KEY = 'minewind-builds';
+  const LEGACY_KEY = 'minewind-build';
 
-  function emptyState(){
-    const s = { slots:{} };
-    SLOTS.forEach(k => { s.slots[k] = { essences:[], soul:null }; });
-    return s;
+  function emptySlots(){
+    const o = {};
+    SLOTS.forEach(k => { o[k] = { essences:[], soul:null }; });
+    return o;
   }
-  function loadState(){
+  function sanitizeSlots(src){
+    const out = emptySlots();
+    if (src){
+      SLOTS.forEach(k => {
+        const s = src[k];
+        if (!s) return;
+        out[k].essences = (s.essences||[])
+          .filter(e => e && e.name && essByNorm[norm(e.name)])
+          .slice(0, MAX_ESS)
+          .map(e => ({ name:e.name, level: Math.min(5, Math.max(1, e.level||1)), owned: !!e.owned }));
+        // soul: one type, quantity 1-4 (convert legacy `souls` array if present)
+        let soul = null;
+        if (s.soul && soulByKey[s.soul.type]){
+          soul = { type: s.soul.type, count: Math.min(MAX_SOULS, Math.max(1, s.soul.count||1)) };
+        } else if (Array.isArray(s.souls) && s.souls.length && soulByKey[s.souls[0]]){
+          soul = { type: s.souls[0], count: Math.min(MAX_SOULS, s.souls.length) };
+        }
+        out[k].soul = soul;
+      });
+    }
+    return out;
+  }
+  function newId(){ return 'set-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+  function defaultName(i){ return tr('build.defaultSetName') + ' ' + (i+1); }
+  function makeSet(name, srcSlots){ return { id:newId(), name:name, slots: sanitizeSlots(srcSlots) }; }
+
+  function loadBuilds(){
+    // current multi-set format
     try {
-      const raw = localStorage.getItem(BUILD_KEY);
+      const raw = localStorage.getItem(BUILDS_KEY);
       if (raw){
         const p = JSON.parse(raw);
-        const s = emptyState();
-        if (p && p.slots){
-          SLOTS.forEach(k => {
-            const src = p.slots[k];
-            if (!src) return;
-            s.slots[k].essences = (src.essences||[])
-              .filter(e => e && e.name && essByNorm[norm(e.name)])
-              .slice(0, MAX_ESS)
-              .map(e => ({ name:e.name, level: Math.min(5, Math.max(1, e.level||1)), owned: !!e.owned }));
-            // soul: one type, quantity 1-4 (convert legacy `souls` array if present)
-            let soul = null;
-            if (src.soul && soulByKey[src.soul.type]){
-              soul = { type: src.soul.type, count: Math.min(MAX_SOULS, Math.max(1, src.soul.count||1)) };
-            } else if (Array.isArray(src.souls) && src.souls.length && soulByKey[src.souls[0]]){
-              soul = { type: src.souls[0], count: Math.min(MAX_SOULS, src.souls.length) };
-            }
-            s.slots[k].soul = soul;
-          });
+        if (p && Array.isArray(p.sets) && p.sets.length){
+          const sets = p.sets.map((s,i) => ({
+            id: s.id || newId(),
+            name: (s.name != null ? String(s.name) : defaultName(i)).slice(0,40),
+            slots: sanitizeSlots(s.slots)
+          }));
+          const activeId = sets.some(s => s.id === p.activeId) ? p.activeId : sets[0].id;
+          return { sets, activeId };
         }
-        return s;
       }
     } catch(e){}
-    return emptyState();
+    // migrate a legacy single build
+    try {
+      const raw = localStorage.getItem(LEGACY_KEY);
+      if (raw){
+        const p = JSON.parse(raw);
+        const set = makeSet(defaultName(0), p && p.slots);
+        return { sets:[set], activeId:set.id };
+      }
+    } catch(e){}
+    const set = makeSet(defaultName(0), null);
+    return { sets:[set], activeId:set.id };
   }
-  let state = loadState();
-  function save(){ try { localStorage.setItem(BUILD_KEY, JSON.stringify(state)); } catch(e){} }
+  let builds = loadBuilds();
+  function active(){ return builds.sets.find(s => s.id === builds.activeId) || builds.sets[0]; }
+  function save(){ try { localStorage.setItem(BUILDS_KEY, JSON.stringify(builds)); } catch(e){} }
+
+  function addSet(){
+    const set = makeSet(defaultName(builds.sets.length), null);
+    builds.sets.push(set);
+    builds.activeId = set.id;
+    openPicker = null;
+    save(); renderBuild();
+  }
+  function deleteSet(id){
+    if (builds.sets.length <= 1) return;
+    builds.sets = builds.sets.filter(s => s.id !== id);
+    if (builds.activeId === id) builds.activeId = builds.sets[0].id;
+    openPicker = null;
+    save(); renderBuild();
+  }
 
   // ---- DOM ----
   const buildView = document.getElementById('build-view');
@@ -123,7 +166,7 @@
 
   // ---- render ----
   function slotMarkup(key){
-    const slot = state.slots[key];
+    const slot = active().slots[key];
     const name = tr('build.slots.' + key);
 
     // essences
@@ -186,7 +229,7 @@
   function shoppingMarkup(){
     const items = [];
     SLOTS.forEach(key => {
-      state.slots[key].essences.forEach((entry, idx) => {
+      active().slots[key].essences.forEach((entry, idx) => {
         const lvls = levelsOf(entry.name);
         const cur = lvls.find(l => l.lvl === entry.level) || lvls[0];
         items.push({ slot:key, idx, name:entry.name, level:entry.level, raw:cur.raw, owned:!!entry.owned });
@@ -229,13 +272,24 @@
 
   function renderBuild(){
     const slotsHtml = SLOTS.map(slotMarkup).join('');
+    const setTabs = builds.sets.map(s =>
+      `<button class="set-tab${s.id===builds.activeId?' active':''}" type="button" data-set-id="${s.id}">${escapeHtml(s.name || '—')}</button>`
+    ).join('');
+    const canDelete = builds.sets.length > 1;
     buildInner.innerHTML = `
+      <div class="sets-bar">
+        ${setTabs}
+        <button class="set-add" type="button" data-set-add>+ ${escapeHtml(tr('build.newSet'))}</button>
+      </div>
       <div class="build-head">
-        <div>
-          <h2 class="build-title">${escapeHtml(tr('build.heading'))}</h2>
+        <div class="build-head-main">
+          <input class="set-name-input" id="set-name" type="text" maxlength="40" value="${escapeHtml(active().name)}" placeholder="${escapeHtml(tr('build.setName'))}" autocomplete="off" spellcheck="false">
           <p class="build-intro">${escapeHtml(tr('build.intro'))}</p>
         </div>
-        <button class="build-reset" type="button" id="build-reset">${escapeHtml(tr('build.reset'))}</button>
+        <div class="build-head-actions">
+          ${canDelete ? `<button class="build-reset danger" type="button" id="set-delete">${escapeHtml(tr('build.deleteSet'))}</button>` : ''}
+          <button class="build-reset" type="button" id="build-reset">${escapeHtml(tr('build.reset'))}</button>
+        </div>
       </div>
       <div class="slots">${slotsHtml}</div>
       ${shoppingMarkup()}
@@ -251,7 +305,7 @@
   function addEssence(slot, name){
     const e = essByNorm[norm(name)];
     if (!e) return false;
-    const s = state.slots[slot];
+    const s = active().slots[slot];
     if (s.essences.length >= MAX_ESS) return false;
     s.essences.push({ name:e.name, level: levelsOf(e.name)[0].lvl, owned:false });
     save();
@@ -261,6 +315,17 @@
   // ---- events ----
   buildView.addEventListener('click', (ev) => {
     const t = ev.target;
+    const setTab = t.closest('[data-set-id]');
+    if (setTab){
+      const id = setTab.getAttribute('data-set-id');
+      if (id !== builds.activeId){ builds.activeId = id; openPicker = null; save(); renderBuild(); }
+      return;
+    }
+    if (t.closest('[data-set-add]')){ addSet(); return; }
+    if (t.closest('#set-delete')){
+      if (confirm(tr('build.deleteSetConfirm'))) deleteSet(builds.activeId);
+      return;
+    }
     const addEss = t.closest('[data-add-ess]');
     if (addEss){ openPicker = { slot:addEss.getAttribute('data-add-ess'), type:'essence' }; renderBuild(); return; }
     const addSoul = t.closest('[data-add-soul]');
@@ -268,21 +333,21 @@
     const rmEss = t.closest('[data-rm-ess]');
     if (rmEss){
       const slot = rmEss.getAttribute('data-rm-ess'), idx = +rmEss.getAttribute('data-idx');
-      state.slots[slot].essences.splice(idx, 1); openPicker = null; save(); renderBuild(); return;
+      active().slots[slot].essences.splice(idx, 1); openPicker = null; save(); renderBuild(); return;
     }
     const rmSoul = t.closest('[data-rm-soul]');
     if (rmSoul){
       const slot = rmSoul.getAttribute('data-rm-soul');
-      state.slots[slot].soul = null; save(); renderBuild(); return;
+      active().slots[slot].soul = null; save(); renderBuild(); return;
     }
     const soulPick = t.closest('[data-soul-pick]');
     if (soulPick){
       const slot = soulPick.getAttribute('data-slot'), sk = soulPick.getAttribute('data-soul-pick');
-      state.slots[slot].soul = { type: sk, count: 1 };
+      active().slots[slot].soul = { type: sk, count: 1 };
       openPicker = null; save(); renderBuild(); return;
     }
     if (t.closest('#build-reset')){
-      if (confirm(tr('build.resetConfirm'))){ state = emptyState(); openPicker = null; save(); renderBuild(); }
+      if (confirm(tr('build.resetConfirm'))){ active().slots = emptySlots(); openPicker = null; save(); renderBuild(); }
       return;
     }
   });
@@ -296,15 +361,32 @@
     }
     if (t.classList.contains('lvl-select')){
       const slot = t.getAttribute('data-slot'), idx = +t.getAttribute('data-idx');
-      state.slots[slot].essences[idx].level = +t.value; save(); renderBuild(); return;
+      active().slots[slot].essences[idx].level = +t.value; save(); renderBuild(); return;
     }
     if (t.classList.contains('own-check')){
       const slot = t.getAttribute('data-slot'), idx = +t.getAttribute('data-idx');
-      state.slots[slot].essences[idx].owned = t.checked; save(); renderBuild(); return;
+      active().slots[slot].essences[idx].owned = t.checked; save(); renderBuild(); return;
     }
     if (t.classList.contains('soul-count')){
       const slot = t.getAttribute('data-slot');
-      if (state.slots[slot].soul) state.slots[slot].soul.count = +t.value; save(); renderBuild(); return;
+      if (active().slots[slot].soul) active().slots[slot].soul.count = +t.value; save(); renderBuild(); return;
+    }
+  });
+
+  // rename the active set live (no full re-render, to keep input focus)
+  buildView.addEventListener('input', (ev) => {
+    if (ev.target.id === 'set-name'){
+      active().name = ev.target.value.slice(0, 40);
+      const tab = buildInner.querySelector('.set-tab.active');
+      if (tab) tab.textContent = active().name || '—';
+      save();
+    }
+  });
+  // on blur, fall back to a default name if left empty
+  buildView.addEventListener('focusout', (ev) => {
+    if (ev.target.id === 'set-name' && !active().name.trim()){
+      active().name = defaultName(builds.sets.indexOf(active()));
+      save(); renderBuild();
     }
   });
 

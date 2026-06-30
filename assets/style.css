@@ -539,6 +539,38 @@
   .tab.active{ color: var(--text); background: var(--accent-soft); }
 
   /* ---------- Build view ---------- */
+  .sets-bar{
+    display:flex; flex-wrap:wrap; gap:6px;
+    margin-bottom:18px;
+  }
+  .set-tab{
+    font-family: var(--font-sans);
+    font-size:13px; font-weight:500;
+    color: var(--text-dim);
+    background: var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:7px 14px;
+    cursor:pointer;
+    max-width:200px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    transition: all 0.12s ease;
+  }
+  .set-tab:hover{ color: var(--text); border-color: var(--border-strong); }
+  .set-tab.active{ color: var(--text); background: var(--accent-soft); border-color: var(--accent); }
+  .set-add{
+    font-family: var(--font-sans);
+    font-size:13px; font-weight:500;
+    color: var(--text-dim);
+    background:transparent;
+    border:1px dashed var(--border-strong);
+    border-radius:8px;
+    padding:7px 12px;
+    cursor:pointer;
+    transition: all 0.15s ease;
+  }
+  .set-add:hover{ color: var(--accent-text); border-color: var(--accent); }
+
   .build-head{
     display:flex;
     align-items:flex-start;
@@ -546,6 +578,23 @@
     gap:16px;
     margin-bottom:20px;
   }
+  .build-head-main{ flex:1; min-width:0; }
+  .build-head-actions{ flex:none; display:flex; gap:8px; }
+  .set-name-input{
+    font-family: var(--font-sans);
+    font-size:20px; font-weight:600; letter-spacing:-0.02em;
+    color: var(--text);
+    background:transparent;
+    border:1px solid transparent;
+    border-radius:8px;
+    padding:4px 8px;
+    margin:0 0 4px -8px;
+    width:100%; max-width:360px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .set-name-input:hover{ border-color: var(--border); }
+  .set-name-input:focus{ outline:none; border-color: var(--accent); background: var(--panel); box-shadow:0 0 0 3px var(--accent-soft); }
+  .build-reset.danger:hover{ color:#fff; background: var(--sigil-weapon); border-color: var(--sigil-weapon); }
   .build-title{ font-size:20px; font-weight:600; letter-spacing:-0.02em; margin:0 0 6px; color: var(--text); }
   .build-intro{ margin:0; font-size:13.5px; color: var(--text-dim); max-width:560px; line-height:1.55; }
   .build-reset{

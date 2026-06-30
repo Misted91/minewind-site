@@ -35,6 +35,27 @@
   const essByNorm = {};
   essences.forEach(e => { essByNorm[norm(e.name)] = e; });
 
+  // Type restriction: a weapon-only essence can't go on armor and vice-versa.
+  // Spells aren't restricted, so they remain available on every slot.
+  function typesOf(e){ return (e && e.type || '').split(',').map(s => s.trim()); }
+  function isSpell(e){ return typesOf(e).includes('spell'); }
+  // Essences that stack across the WHOLE loadout (not per item), with their max effective tier.
+  // e.g. Untouchable: putting II on two different pieces yields IV.
+  const SET_STACK = { 'untouchable': 4 };
+  function isSetStack(name){ return SET_STACK[norm(name)] != null; }
+  // Which essences a slot category accepts:
+  //  - 'any'    (helmet/head): everything — a tool/weapon can sit there
+  //  - 'weapon' (offhand): weapon essences + spells
+  //  - 'armor'  (chest/legs/boots): armor essences only — NO spells, no weapon-only
+  function appliesTo(e, cat){
+    if (!e) return false;
+    if (cat === 'any') return true;
+    const types = typesOf(e);
+    if (cat === 'weapon') return types.includes('weapon') || types.includes('spell');
+    if (cat === 'armor') return types.includes('armor');
+    return false;
+  }
+
   function translateLegend(value){
     if (value === 'Pas encore échangé') return tr('notTraded');
     return value.replace('ou moins', tr('orLess'));
@@ -69,6 +90,8 @@
 
   // ---- state: multiple named sets (persisted) ----
   const SLOTS = ['helmet','chestplate','leggings','boots','offhand'];
+  // helmet/head can hold a tool or weapon, so it accepts every essence type
+  const SLOT_CAT = { helmet:'any', chestplate:'armor', leggings:'armor', boots:'armor', offhand:'weapon' };
   const MAX_ESS = 3, MAX_SOULS = 4;
   const BUILDS_KEY = 'minewind-builds';
   const LEGACY_KEY = 'minewind-build';
@@ -84,10 +107,22 @@
       SLOTS.forEach(k => {
         const s = src[k];
         if (!s) return;
+        let firstSpell = null;
+        const seen = new Set();
         out[k].essences = (s.essences||[])
-          .filter(e => e && e.name && essByNorm[norm(e.name)])
-          .slice(0, MAX_ESS)
-          .map(e => ({ name:e.name, level: Math.min(5, Math.max(1, e.level||1)), owned: !!e.owned }));
+          .filter(e => e && e.name && essByNorm[norm(e.name)] && appliesTo(essByNorm[norm(e.name)], SLOT_CAT[k]))
+          .map(e => ({ name: essByNorm[norm(e.name)].name, level: Math.min(5, Math.max(1, e.level||1)), owned: !!e.owned }))
+          .filter(e => {
+            const id = norm(e.name) + '|' + e.level;
+            if (seen.has(id)) return false;                          // same essence + same tier twice
+            if (isSpell(essByNorm[norm(e.name)])){
+              if (firstSpell && firstSpell !== norm(e.name)) return false; // a second, different spell
+              firstSpell = norm(e.name);
+            }
+            seen.add(id);
+            return true;
+          })
+          .slice(0, MAX_ESS);
         // soul: one type, quantity 1-4 (convert legacy `souls` array if present)
         let soul = null;
         if (s.soul && soulByKey[s.soul.type]){
@@ -155,12 +190,40 @@
   // ---- DOM ----
   const buildView = document.getElementById('build-view');
   const buildInner = document.getElementById('build-inner');
-  const datalist = document.getElementById('ess-datalist');
+  const pickerList = document.getElementById('ess-picker-list');
   const codexView = document.getElementById('codex-view');
   const tabs = document.getElementById('tabs');
 
-  // fill datalist once (language-independent)
-  datalist.innerHTML = essences.map(e => `<option value="${escapeHtml(e.name)}"></option>`).join('');
+  // The same essence can be stacked at DIFFERENT tiers. First tier still free for an essence on a slot:
+  function freeLevel(slot, name){
+    const used = active().slots[slot].essences.filter(en => norm(en.name) === norm(name)).map(en => en.level);
+    const found = levelsOf(name).map(l => l.lvl).find(l => !used.includes(l));
+    return (found != null) ? found : null;
+  }
+  // Stacked effect of an essence on an item: sum of its tiers, capped at the essence's max tier.
+  function stackCap(name){
+    if (SET_STACK[norm(name)] != null) return SET_STACK[norm(name)];
+    const e = essByNorm[norm(name)];
+    const c = parseInt((e && e.cap) || '', 10);
+    if (c) return c;
+    const lv = levelsOf(name);
+    return lv[lv.length - 1].lvl; // fall back to highest available tier
+  }
+  // Essences a slot can still receive: category filter, single-distinct-spell rule, and a free tier left.
+  function allowedEssences(slot){
+    const cat = SLOT_CAT[slot];
+    const spellNames = active().slots[slot].essences
+      .filter(en => isSpell(essByNorm[norm(en.name)])).map(en => norm(en.name));
+    return essences.filter(e =>
+      appliesTo(e, cat) &&
+      !(isSpell(e) && spellNames.length && !spellNames.includes(norm(e.name))) && // a different spell already there
+      freeLevel(slot, e.name) != null      // still has a tier not yet on this item
+    );
+  }
+  function fillPicker(slot){
+    pickerList.innerHTML = allowedEssences(slot)
+      .map(e => `<option value="${escapeHtml(e.name)}"></option>`).join('');
+  }
 
   let openPicker = null; // { slot, type:'essence'|'soul' }
 
@@ -173,7 +236,10 @@
     let essChips = slot.essences.map((entry, i) => {
       const lvls = levelsOf(entry.name);
       if (!lvls.some(l => l.lvl === entry.level)) entry.level = lvls[0].lvl;
-      const opts = lvls.map(l =>
+      // tiers used by OTHER entries of the same essence can't be picked twice
+      const usedByOthers = slot.essences
+        .filter((en, j) => j !== i && norm(en.name) === norm(entry.name)).map(en => en.level);
+      const opts = lvls.filter(l => l.lvl === entry.level || !usedByOthers.includes(l.lvl)).map(l =>
         `<option value="${l.lvl}"${l.lvl===entry.level?' selected':''}>${ROMAN[l.lvl-1]} · ${escapeHtml(priceText(l.raw))}</option>`
       ).join('');
       return `<div class="ess-chip">
@@ -185,9 +251,19 @@
     if (slot.essences.length < MAX_ESS){
       essChips += `<button class="add-chip" type="button" data-add-ess="${key}">+ ${escapeHtml(tr('build.addEssence'))}</button>`;
     }
+
+    // stacking note: essences present more than once -> summed tier capped at the essence's max
+    const groups = {};
+    slot.essences.forEach(en => { (groups[en.name] = groups[en.name] || []).push(en.level); });
+    const stackNotes = Object.keys(groups).filter(n => groups[n].length > 1 && !isSetStack(n)).map(n => {
+      const lv = groups[n].slice().sort((a,b) => a-b);
+      const eff = Math.min(stackCap(n), lv.reduce((a,b) => a+b, 0));
+      return `<div class="stack-note"><span class="stack-name">${escapeHtml(n)}</span>
+        <span class="stack-calc">${lv.map(l => ROMAN[l-1]).join(' + ')} → <strong>${ROMAN[eff-1] || eff}</strong></span></div>`;
+    }).join('');
     let essPicker = '';
     if (openPicker && openPicker.slot === key && openPicker.type === 'essence'){
-      essPicker = `<input class="ess-input" type="text" data-slot="${key}" list="ess-datalist" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(tr('build.searchEssence'))}">`;
+      essPicker = `<input class="ess-input" type="text" data-slot="${key}" list="ess-picker-list" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(tr('build.searchEssence'))}">`;
     }
 
     // soul: a single type with a quantity (1-4)
@@ -216,6 +292,7 @@
       <div class="slot-block">
         <div class="slot-label">${escapeHtml(tr('build.essences'))} <span class="slot-count">${slot.essences.length}/${MAX_ESS}</span></div>
         <div class="ess-list">${essChips}</div>
+        ${stackNotes ? `<div class="stack-notes">${stackNotes}</div>` : ''}
         ${essPicker}
       </div>
       <div class="slot-block">
@@ -270,6 +347,26 @@
     </div>`;
   }
 
+  // essences that stack across the whole loadout (Untouchable) -> one combined effect
+  function setEffectsMarkup(){
+    const totals = {};
+    SLOTS.forEach(k => active().slots[k].essences.forEach(en => {
+      if (isSetStack(en.name)) (totals[en.name] = totals[en.name] || []).push(en.level);
+    }));
+    const names = Object.keys(totals);
+    if (!names.length) return '';
+    const rows = names.map(n => {
+      const lv = totals[n].slice().sort((a,b) => a-b);
+      const eff = Math.min(stackCap(n), lv.reduce((a,b) => a+b, 0));
+      return `<div class="stack-note"><span class="stack-name">${escapeHtml(n)}</span>
+        <span class="stack-calc">${lv.map(l => ROMAN[l-1]).join(' + ')} → <strong>${ROMAN[eff-1] || eff}</strong></span></div>`;
+    }).join('');
+    return `<div class="set-effects">
+      <div class="set-effects-label">${escapeHtml(tr('build.setEffect'))}</div>
+      ${rows}
+    </div>`;
+  }
+
   function renderBuild(){
     const slotsHtml = SLOTS.map(slotMarkup).join('');
     const setTabs = builds.sets.map(s =>
@@ -292,10 +389,12 @@
         </div>
       </div>
       <div class="slots">${slotsHtml}</div>
+      ${setEffectsMarkup()}
       ${shoppingMarkup()}
     `;
-    // focus the essence picker if just opened
+    // fill + focus the essence picker if just opened
     if (openPicker && openPicker.type === 'essence'){
+      fillPicker(openPicker.slot);
       const inp = buildInner.querySelector('.ess-input');
       if (inp) inp.focus();
     }
@@ -305,9 +404,14 @@
   function addEssence(slot, name){
     const e = essByNorm[norm(name)];
     if (!e) return false;
+    if (!appliesTo(e, SLOT_CAT[slot])) return false; // weapon-only on armor (or vice-versa)
     const s = active().slots[slot];
     if (s.essences.length >= MAX_ESS) return false;
-    s.essences.push({ name:e.name, level: levelsOf(e.name)[0].lvl, owned:false });
+    // only one DISTINCT spell per item (the same spell may still be stacked at other tiers)
+    if (isSpell(e) && s.essences.some(en => isSpell(essByNorm[norm(en.name)]) && norm(en.name) !== norm(e.name))) return false;
+    const lvl = freeLevel(slot, e.name);
+    if (lvl == null) return false; // every tier of this essence is already on the item
+    s.essences.push({ name:e.name, level: lvl, owned:false });
     save();
     return true;
   }

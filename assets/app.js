@@ -95,6 +95,7 @@
   const searchCount = document.getElementById('search-count');
 
   let openCardKey = null;
+  let lastRandom = null; // pool key of the last "random" pick, to show a re-roll bar
 
   function escapeHtml(s){
     return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -236,12 +237,22 @@
     }
 
     const capped = matches.slice(0, 60);
-    resultsEl.innerHTML = capped.map(renderCard).join('');
+    const bar = lastRandom ? rerollBar() : '';
+    resultsEl.innerHTML = bar + capped.map(renderCard).join('');
   }
 
-  searchInput.addEventListener('input', render);
+  function rerollBar(){
+    const btns = REROLL_BTNS.map(([key, labelKey, icon]) =>
+      `<button class="reroll-btn${key===lastRandom?' current':''}" type="button" data-reroll="${key}">${icon}<span>${escapeHtml(tr(labelKey))}</span></button>`
+    ).join('');
+    return `<div class="reroll-bar"><span class="reroll-label">${escapeHtml(tr('rerollLabel'))}</span>${btns}</div>`;
+  }
+
+  searchInput.addEventListener('input', () => { lastRandom = null; render(); });
 
   resultsEl.addEventListener('click', (ev) => {
+    const rb = ev.target.closest('[data-reroll]');
+    if (rb){ pickRandom(rb.getAttribute('data-reroll')); return; }
     const card = ev.target.closest('.essence-card');
     if (!card) return;
     const key = card.getAttribute('data-key');
@@ -249,18 +260,31 @@
     render();
   });
 
-  function pickRandom(filterFn){
-    const pool = essences.filter(filterFn);
+  const RANDOM_POOLS = {
+    all: () => true,
+    weapon: e => (e.type||'').includes('weapon'),
+    spell: e => (e.type||'').includes('spell')
+  };
+  const REROLL_BTNS = [
+    ['all', 'randomEssence', ICONS.star],
+    ['weapon', 'randomWeapon', ICONS.weapon],
+    ['spell', 'randomSpell', ICONS.spell]
+  ];
+
+  function pickRandom(key){
+    const pool = essences.filter(RANDOM_POOLS[key] || RANDOM_POOLS.all);
+    if (!pool.length) return;
     const pick = pool[Math.floor(Math.random() * pool.length)];
+    lastRandom = key;
     searchInput.value = pick.name;
     openCardKey = pick.name;
     render();
     resultsEl.scrollIntoView({ behavior:'smooth', block:'start' });
   }
 
-  document.getElementById('random-btn').addEventListener('click', () => pickRandom(() => true));
-  document.getElementById('surprise-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('weapon')));
-  document.getElementById('surprise-spell-btn').addEventListener('click', () => pickRandom(e => (e.type||'').includes('spell')));
+  document.getElementById('random-btn').addEventListener('click', () => pickRandom('all'));
+  document.getElementById('surprise-btn').addEventListener('click', () => pickRandom('weapon'));
+  document.getElementById('surprise-spell-btn').addEventListener('click', () => pickRandom('spell'));
 
   // ---- theme toggle (dark / light) ----
   const THEME_KEY = 'minewind-theme';

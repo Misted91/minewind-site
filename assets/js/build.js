@@ -36,7 +36,8 @@
   // Z (bidding wars) and TBD have no estimate — they're counted as "undetermined".
   const TIER_STACKS = { X:40, SSS:20, SS:12, S:8, AAA:7, AA:6, A:5, BBB:4, BB:3, B:2, CCC:1, CC:0.5, C:0.25 };
   const essByNorm = {};
-  essences.forEach(e => { essByNorm[norm(e.name)] = e; });
+  const essIndexByNorm = {};
+  essences.forEach((e, i) => { essByNorm[norm(e.name)] = e; essIndexByNorm[norm(e.name)] = i; });
 
   // Type restriction: a weapon-only essence can't go on armor and vice-versa.
   // Spells aren't restricted, so they remain available on every slot.
@@ -213,16 +214,64 @@
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return new TextDecoder().decode(bytes);
   }
+  // Compact "v1" codec: essences/souls referenced by index, positional (no JSON keys).
+  //   1|slot;slot;slot;slot;slot|name   with slot = "idx.lvl[o],idx.lvl[o]![soulIdx][count]"
+  function encodeSet(set){
+    const parts = SLOTS.map(k => {
+      const slot = set.slots[k] || {};
+      const es = (slot.essences || []).map(en => {
+        const idx = essIndexByNorm[norm(en.name)];
+        if (idx == null) return '';
+        return idx.toString(36) + '.' + en.level + (en.owned ? 'o' : '');
+      }).filter(Boolean).join(',');
+      let soul = '';
+      if (slot.soul){
+        const si = SOULS.findIndex(s => s.key === slot.soul.type);
+        if (si >= 0) soul = '!' + si.toString(36) + slot.soul.count;
+      }
+      return es + soul;
+    }).join(';');
+    return b64url('1|' + parts + '|' + (set.name || ''));
+  }
+  function decodeCompact(raw){
+    const i1 = raw.indexOf('|');
+    const i2 = raw.indexOf('|', i1 + 1);
+    if (raw.slice(0, i1) !== '1' || i2 < 0) return null;
+    const slotArr = raw.slice(i1 + 1, i2).split(';');
+    const name = raw.slice(i2 + 1);
+    const slots = emptySlots();
+    SLOTS.forEach((k, si) => {
+      const chunk = slotArr[si] || '';
+      if (!chunk) return;
+      const bang = chunk.indexOf('!');
+      const essPart = bang >= 0 ? chunk.slice(0, bang) : chunk;
+      const soulPart = bang >= 0 ? chunk.slice(bang + 1) : '';
+      if (essPart){
+        essPart.split(',').forEach(tok => {
+          const m = tok.match(/^([0-9a-z]+)\.(\d)(o?)$/);
+          if (!m) return;
+          const e = essences[parseInt(m[1], 36)];
+          if (e) slots[k].essences.push({ name: e.name, level: +m[2], owned: m[3] === 'o' });
+        });
+      }
+      const sm = soulPart.match(/^([0-9a-z]+)(\d)$/);
+      if (sm){ const s = SOULS[parseInt(sm[1], 36)]; if (s) slots[k].soul = { type: s.key, count: +sm[2] }; }
+    });
+    return { name: name, slots: slots };
+  }
   function shareUrl(set){
-    const payload = b64url(JSON.stringify({ n: set.name, s: set.slots }));
-    return location.origin + location.pathname + '#s=' + payload;
+    return location.origin + location.pathname + '#s=' + encodeSet(set);
   }
   function importFromHash(){
     const m = (location.hash || '').match(/[#&]s=([^&]+)/);
     if (!m) return false;
     try {
-      const data = JSON.parse(unb64url(m[1]));
-      const set = makeSet((data.n != null ? String(data.n) : defaultName(builds.sets.length)).slice(0,40), data.s);
+      const raw = unb64url(m[1]);
+      let data = /^1\|/.test(raw) ? decodeCompact(raw) : null;
+      if (!data){ const j = JSON.parse(raw); data = { name: j.n, slots: j.s }; } // legacy JSON links
+      if (!data) return false;
+      const name = (data.name != null ? String(data.name) : defaultName(builds.sets.length)).slice(0,40);
+      const set = makeSet(name, data.slots);
       builds.sets.push(set);
       builds.activeId = set.id;
       save();

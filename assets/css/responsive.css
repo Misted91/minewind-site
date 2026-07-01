@@ -2,14 +2,75 @@
    responsive.css — media queries and motion preferences (load last)
    ========================================================================== */
 
+/* ---------- Tablets / small laptops ---------- */
+@media (max-width: 760px){
+  .wrap{ padding: 56px 18px 80px; }
+  .slots{ grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
+}
+
+/* ---------- Phones ---------- */
 @media (max-width: 600px){
-  .wrap{ padding: 64px 16px 80px; }
-  .theme-toggle{ top:16px; left:16px; }
-  .lang-switch{ top:16px; right:16px; }
+  .wrap{ padding: 56px 14px 72px; }
+
+  /* corner controls: tighter, so they don't crowd the title */
+  .theme-toggle{ top:14px; left:14px; width:30px; height:30px; }
+  .lang-switch{ top:14px; right:14px; }
+  .lang-btn{ padding:4px 6px; font-size:10.5px; }
+
+  /* hero */
+  header.hero{ margin: 24px 0 28px; }
+  .eyebrow{ margin-bottom:10px; }
+  .subtitle{ font-size:14px; }
+  .meta-line{ font-size:11px; line-height:1.5; }
+
+  .tabs{ margin-bottom:22px; }
+
+  /* search — 16px avoids iOS auto-zoom on focus */
+  #search-input{ font-size:16px; padding:12px 0; }
+  .search-count{ font-size:10px; padding:4px 7px; }
+
+  /* filter bar */
+  .filter-bar{ gap:5px; }
+  .filter-sep{ display:none; }
+  .filter-chip{ font-size:11px; padding:4px 9px; }
+
+  /* legend + random + reroll */
+  .legend-grid{ grid-template-columns: repeat(auto-fit, minmax(108px,1fr)); }
+  .legend-value{ font-size:10px; }
+  .random-row{ gap:6px; }
+  .random-btn{ font-size:12px; padding:7px 11px; }
+  .reroll-bar{ gap:6px; }
+
+  /* cards */
+  .essence-card{ padding:15px 15px 13px; }
+  .card-name{ font-size:15px; }
+  .card-desc{ font-size:13.5px; }
   .price-pill{ min-width:40px; padding:6px 8px; }
+  .fav-btn{ width:28px; height:28px; }
+
+  /* ---- build tab ---- */
   .build-head{ flex-direction:column; }
+  .build-head-actions{ width:100%; flex-wrap:wrap; }
+  .set-name-input{ font-size:18px; max-width:none; }
   .slots{ grid-template-columns:1fr; }
+  .lvl-select{ width:130px; }
+  .ess-input{ font-size:16px; }
+  .shopping-stats{ flex-wrap:wrap; }
+  .set-tab{ max-width:150px; }
   .buy-slot{ display:none; }
+}
+
+/* ---------- Very small phones ---------- */
+@media (max-width: 400px){
+  .wrap{ padding: 54px 11px 64px; }
+  .tab{ padding:7px 14px; font-size:12.5px; }
+
+  /* essence chip wraps: name on its own line, select + × below */
+  .ess-chip{ flex-wrap:wrap; }
+  .ess-chip-name{ flex-basis:100%; }
+  .lvl-select{ flex:1; width:auto; }
+
+  .build-head-actions .build-reset{ flex:1; text-align:center; }
 }
 
 @media (prefers-reduced-motion: reduce){

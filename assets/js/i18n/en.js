@@ -30,6 +30,9 @@ window.__I18N_STRINGS__.en = {
   typeArmor: 'Armor',
   orLess: 'or less',
   notTraded: 'Not yet traded',
+  favTitle: 'Add / remove from favorites',
+  favFilter: 'Favorites',
+  favEmpty: 'No favorites yet. Click the star on an essence to add it.',
   guideTitle: 'Beginner guide',
   guide: {
     money: {
@@ -53,6 +56,9 @@ window.__I18N_STRINGS__.en = {
   build: {
     tab: 'Loadout',
     newSet: 'New set',
+    share: 'Share',
+    shareCopied: 'Link copied!',
+    estCost: 'Estimated remaining cost (approximate, in stacks)',
     setEffect: 'Set effect (stacked across the loadout)',
     setName: 'Set name',
     deleteSet: 'Delete',

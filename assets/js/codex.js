@@ -42,6 +42,8 @@
     weapon: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 4 7V3h4l10.5 10.5"/><path d="m13 19 6-6"/><path d="m16 16 5 5"/><path d="m19.5 20.5 1-1"/></svg>',
     armor: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7.5-3.5 7.5-9.5V5L12 2.5 4.5 5v7.5C4.5 18.5 12 22 12 22z"/></svg>',
     star: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.3 4.5 3.5 7.7 8 8-4.5.3-7.7 3.5-8 8-.3-4.5-3.5-7.7-8-8 4.5-.3 7.7-3.5 8-8z"/></svg>',
+    favOn: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.5l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.3l6.5-.9z"/></svg>',
+    favOff: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.6 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
     sun: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></svg>',
     moon: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
     book: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H20v3H6.5A2.5 2.5 0 0 1 4 20.5z"/></svg>'
@@ -96,6 +98,21 @@
 
   let openCardKey = null;
   let lastRandom = null; // pool key of the last "random" pick, to show a re-roll bar
+
+  // ---- favorites (⭐) ----
+  const FAV_KEY = 'minewind-favorites';
+  let favorites = new Set();
+  try { const a = JSON.parse(localStorage.getItem(FAV_KEY)); if (Array.isArray(a)) favorites = new Set(a); } catch(e){}
+  function saveFav(){ try { localStorage.setItem(FAV_KEY, JSON.stringify([...favorites])); } catch(e){} }
+
+  // ---- browse filters (type / key section / favorites) ----
+  const SECTIONS = [...new Set(essences.map(e => e.section).filter(Boolean))];
+  const sectionLabel = s => s.replace(/\s*Key Essences$/i, '').trim(); // "Tempest Key Essences" -> "Tempest"
+  const filterType = new Set();
+  const filterSection = new Set();
+  let favView = false;
+  function typesOfE(e){ return (e.type||'').split(',').map(s => s.trim()).filter(Boolean); }
+  function anyFilter(){ return filterType.size || filterSection.size || favView; }
 
   function escapeHtml(s){
     return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -173,6 +190,7 @@
             </div>
             ${e.section ? `<div class="card-section">${escapeHtml(e.section)}</div>` : ''}
           </div>
+          <button class="fav-btn${favorites.has(key)?' active':''}" type="button" data-fav="${escapeHtml(key)}" title="${escapeHtml(tr('favTitle'))}" aria-label="favorite">${favorites.has(key) ? ICONS.favOn : ICONS.favOff}</button>
         </div>
         ${e.description ? `<p class="card-desc">${escapeHtml(e.description)}</p>` : ''}
         ${renderPriceRow(e)}
@@ -214,32 +232,67 @@
     return scored.map(s => s[1]);
   }
 
+  // apply active filters/favorites on top of a base list (search results, or all essences when browsing)
+  function currentList(){
+    let list = searchInput.value.trim()
+      ? runSearch(searchInput.value)
+      : essences.slice().sort((a,b) => a.name.localeCompare(b.name));
+    if (favView) list = list.filter(e => favorites.has(e.name));
+    if (filterType.size) list = list.filter(e => typesOfE(e).some(t => filterType.has(t)));
+    if (filterSection.size) list = list.filter(e => filterSection.has(e.section));
+    return list;
+  }
+
+  const filterBar = document.getElementById('filter-bar');
+  function renderFilters(){
+    const fav = `<button class="filter-chip fav${favView?' active':''}" type="button" data-filter="fav">${favView?ICONS.favOn:ICONS.favOff}<span>${escapeHtml(tr('favFilter'))}${favorites.size?` (${favorites.size})`:''}</span></button>`;
+    const types = TYPE_KEYS.map(t =>
+      `<button class="filter-chip${filterType.has(t)?' active':''}" type="button" data-type="${t}">${typeIcon[t]}<span>${escapeHtml(tr(typeLabelKey[t]))}</span></button>`
+    ).join('');
+    const sections = SECTIONS.map(sec =>
+      `<button class="filter-chip${filterSection.has(sec)?' active':''}" type="button" data-section="${escapeHtml(sec)}">${escapeHtml(sectionLabel(sec))}</button>`
+    ).join('');
+    filterBar.innerHTML = fav + '<span class="filter-sep"></span>' + types + '<span class="filter-sep"></span>' + sections;
+  }
+
   function render(){
-    const query = searchInput.value;
-    if (!query.trim()){
+    renderFilters();
+    const hasQ = !!searchInput.value.trim();
+    if (!hasQ && !anyFilter()){
       idlePanel.style.display = '';
       resultsEl.innerHTML = '';
       searchCount.textContent = `${essences.length} ${tr('essencesWord')}`;
       return;
     }
     idlePanel.style.display = 'none';
-    const matches = runSearch(query);
+    const matches = currentList();
     searchCount.textContent = matches.length === 1 ? tr('resultOne') : fmt(tr('resultMany'), {n: matches.length});
 
     if (matches.length === 0){
+      const favEmpty = favView && favorites.size === 0;
       resultsEl.innerHTML = `
         <div class="empty-state">
           <span class="glyph">${ICONS.star}</span>
-          <div class="msg">${escapeHtml(tr('emptyMsg'))}</div>
-          <div class="hint">${escapeHtml(tr('emptyHint'))}</div>
+          <div class="msg">${escapeHtml(favEmpty ? tr('favEmpty') : tr('emptyMsg'))}</div>
+          ${favEmpty ? '' : `<div class="hint">${escapeHtml(tr('emptyHint'))}</div>`}
         </div>`;
       return;
     }
 
-    const capped = matches.slice(0, 60);
+    const capped = matches.slice(0, 120);
     const bar = lastRandom ? rerollBar() : '';
     resultsEl.innerHTML = bar + capped.map(renderCard).join('');
   }
+
+  filterBar.addEventListener('click', (ev) => {
+    const c = ev.target.closest('[data-filter],[data-type],[data-section]');
+    if (!c) return;
+    if (c.hasAttribute('data-filter')){ favView = !favView; }
+    else if (c.hasAttribute('data-type')){ const t = c.getAttribute('data-type'); filterType.has(t) ? filterType.delete(t) : filterType.add(t); }
+    else if (c.hasAttribute('data-section')){ const s = c.getAttribute('data-section'); filterSection.has(s) ? filterSection.delete(s) : filterSection.add(s); }
+    lastRandom = null;
+    render();
+  });
 
   function rerollBar(){
     const btns = REROLL_BTNS.map(([key, labelKey, icon]) =>
@@ -251,6 +304,12 @@
   searchInput.addEventListener('input', () => { lastRandom = null; render(); });
 
   resultsEl.addEventListener('click', (ev) => {
+    const fav = ev.target.closest('[data-fav]');
+    if (fav){
+      const k = fav.getAttribute('data-fav');
+      favorites.has(k) ? favorites.delete(k) : favorites.add(k);
+      saveFav(); render(); return;
+    }
     const rb = ev.target.closest('[data-reroll]');
     if (rb){ pickRandom(rb.getAttribute('data-reroll')); return; }
     const card = ev.target.closest('.essence-card');

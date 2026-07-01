@@ -32,6 +32,9 @@
   const ROMAN = ['I','II','III','IV','V'];
   const tierValue = {};
   tierLegend.forEach(r => { tierValue[r.tier] = r.value; });
+  // Rough worth of each tier code, in "s" (1 stack = 64 dragon eggs), for the shopping total.
+  // Z (bidding wars) and TBD have no estimate — they're counted as "undetermined".
+  const TIER_STACKS = { X:40, SSS:20, SS:12, S:8, AAA:7, AA:6, A:5, BBB:4, BB:3, B:2, CCC:1, CC:0.5, C:0.25 };
   const essByNorm = {};
   essences.forEach(e => { essByNorm[norm(e.name)] = e; });
 
@@ -196,6 +199,38 @@
   function active(){ return builds.sets.find(s => s.id === builds.activeId) || builds.sets[0]; }
   function save(){ try { localStorage.setItem(BUILDS_KEY, JSON.stringify(builds)); } catch(e){} }
 
+  // ---- share a set via URL (no backend: the whole set is encoded in the link) ----
+  function b64url(str){
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    bytes.forEach(b => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function unb64url(s){
+    s = s.replace(/-/g,'+').replace(/_/g,'/');
+    const bin = atob(s);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function shareUrl(set){
+    const payload = b64url(JSON.stringify({ n: set.name, s: set.slots }));
+    return location.origin + location.pathname + '#s=' + payload;
+  }
+  function importFromHash(){
+    const m = (location.hash || '').match(/[#&]s=([^&]+)/);
+    if (!m) return false;
+    try {
+      const data = JSON.parse(unb64url(m[1]));
+      const set = makeSet((data.n != null ? String(data.n) : defaultName(builds.sets.length)).slice(0,40), data.s);
+      builds.sets.push(set);
+      builds.activeId = set.id;
+      save();
+      history.replaceState(null, '', location.pathname + location.search);
+      return true;
+    } catch(e){ return false; }
+  }
+
   function addSet(){
     const set = makeSet(defaultName(builds.sets.length), null);
     builds.sets.push(set);
@@ -347,6 +382,18 @@
     const total = items.length;
     const owned = items.filter(i => i.owned).length;
     const remaining = total - owned;
+
+    // estimated remaining cost (sum of unowned tiers, in stacks); some tiers have no estimate
+    let cost = 0, undetermined = false;
+    items.filter(i => !i.owned).forEach(it => {
+      const code = (it.raw || '').trim();
+      if (TIER_STACKS[code] != null) cost += TIER_STACKS[code];
+      else if (code) undetermined = true;
+    });
+    const costLabel = remaining
+      ? `<span class="stat-cost" title="${escapeHtml(tr('build.estCost'))}">≈ ${Math.round(cost*10)/10}s${undetermined ? ' +' : ''}</span>`
+      : '';
+
     // remaining first, then owned
     items.sort((a,b) => (a.owned - b.owned));
 
@@ -365,6 +412,7 @@
         <div class="shopping-stats">
           <span class="stat-rem">${remaining} ${escapeHtml(tr('build.remaining'))}</span>
           <span class="stat-own">${owned}/${total} ${escapeHtml(tr('build.acquired'))}</span>
+          ${costLabel}
         </div>
       </div>
       <div class="buy-list">${rows}</div>
@@ -408,6 +456,7 @@
           <p class="build-intro">${escapeHtml(tr('build.intro'))}</p>
         </div>
         <div class="build-head-actions">
+          <button class="build-reset accent" type="button" id="set-share">${escapeHtml(tr('build.share'))}</button>
           ${canDelete ? `<button class="build-reset danger" type="button" id="set-delete">${escapeHtml(tr('build.deleteSet'))}</button>` : ''}
           <button class="build-reset" type="button" id="build-reset">${escapeHtml(tr('build.reset'))}</button>
         </div>
@@ -452,6 +501,21 @@
     if (t.closest('[data-set-add]')){ addSet(); return; }
     if (t.closest('#set-delete')){
       if (confirm(tr('build.deleteSetConfirm'))) deleteSet(builds.activeId);
+      return;
+    }
+    const shareBtn = t.closest('#set-share');
+    if (shareBtn){
+      const url = shareUrl(active());
+      const done = () => {
+        const orig = tr('build.share');
+        shareBtn.textContent = tr('build.shareCopied');
+        setTimeout(() => { shareBtn.textContent = orig; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(url).then(done, () => prompt(tr('build.shareCopied'), url));
+      } else {
+        prompt(tr('build.shareCopied'), url);
+      }
       return;
     }
     const addEss = t.closest('[data-add-ess]');
@@ -544,7 +608,8 @@
     const b = ev.target.closest('.tab');
     if (b) setTab(b.getAttribute('data-tab'));
   });
-  setTab(localStorage.getItem(TAB_KEY) === 'build' ? 'build' : 'codex');
+  const imported = importFromHash();
+  setTab(imported || localStorage.getItem(TAB_KEY) === 'build' ? 'build' : 'codex');
 
   // ---- keep in sync with language switches from app.js ----
   document.addEventListener('codexlang', (ev) => {

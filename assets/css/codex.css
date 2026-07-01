@@ -228,6 +228,46 @@
 .essence-card:hover{ border-color: var(--border-strong); background: var(--panel-2); }
 .essence-card[data-open="true"]{ border-color: var(--border-strong); }
 
+/* ---------- Filter bar (type / section / favorites) ---------- */
+.filter-bar{
+  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
+  max-width:640px;
+  margin:0 auto 8px;
+}
+.filter-bar:empty{ display:none; }
+.filter-sep{ width:1px; height:18px; background:var(--border); margin:0 2px; }
+.filter-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family: var(--font-sans);
+  font-size:12px; font-weight:500;
+  color: var(--text-dim);
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:5px 11px;
+  cursor:pointer;
+  transition: all 0.14s ease;
+}
+.filter-chip:hover{ color: var(--text); border-color: var(--border-strong); }
+.filter-chip.active{ color: var(--text); background: var(--accent-soft); border-color: var(--accent); }
+.filter-chip.fav.active{ color: var(--gold-bright, #f0c878); border-color: var(--gold, #d4a543); background: rgba(212,165,67,0.12); }
+.filter-chip .ico{ width:13px; height:13px; }
+
+/* ---------- Favorite star on cards ---------- */
+.fav-btn{
+  flex:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  width:30px; height:30px;
+  color: var(--text-faint);
+  background:transparent;
+  border:0; border-radius:8px;
+  cursor:pointer;
+  transition: color 0.14s ease, background 0.14s ease;
+}
+.fav-btn:hover{ color: var(--gold, #d4a543); background: var(--panel-2); }
+.fav-btn.active{ color: var(--gold, #d4a543); }
+.fav-btn .ico{ width:18px; height:18px; }
+
 .card-top{
   display:flex;
   align-items:flex-start;

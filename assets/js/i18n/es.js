@@ -30,6 +30,9 @@ window.__I18N_STRINGS__.es = {
   typeArmor: 'Armadura',
   orLess: 'o menos',
   notTraded: 'Aún no intercambiada',
+  favTitle: 'Añadir / quitar de favoritos',
+  favFilter: 'Favoritos',
+  favEmpty: 'Aún no hay favoritos. Haz clic en la estrella de una esencia para añadirla.',
   guideTitle: 'Guía para principiantes',
   guide: {
     money: {
@@ -53,6 +56,9 @@ window.__I18N_STRINGS__.es = {
   build: {
     tab: 'Equipo',
     newSet: 'Nuevo set',
+    share: 'Compartir',
+    shareCopied: '¡Enlace copiado!',
+    estCost: 'Coste restante estimado (aproximado, en stacks)',
     setEffect: 'Efecto de conjunto (acumulado en todo el equipo)',
     setName: 'Nombre del set',
     deleteSet: 'Eliminar',

@@ -30,6 +30,9 @@ window.__I18N_STRINGS__.it = {
   typeArmor: 'Armatura',
   orLess: 'o meno',
   notTraded: 'Non ancora scambiata',
+  favTitle: 'Aggiungi / rimuovi dai preferiti',
+  favFilter: 'Preferiti',
+  favEmpty: "Ancora nessun preferito. Clicca sulla stella di un'essenza per aggiungerla.",
   guideTitle: 'Guida per principianti',
   guide: {
     money: {
@@ -53,6 +56,9 @@ window.__I18N_STRINGS__.it = {
   build: {
     tab: 'Equipaggiamento',
     newSet: 'Nuovo set',
+    share: 'Condividi',
+    shareCopied: 'Link copiato!',
+    estCost: 'Costo residuo stimato (approssimativo, in stack)',
     setEffect: "Effetto del set (cumulato sull'intero equipaggiamento)",
     setName: 'Nome del set',
     deleteSet: 'Elimina',

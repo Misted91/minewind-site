@@ -36,7 +36,10 @@
   // item = a piece of gear (or a tool/weapon) of a given material — game terms kept in English
   const PIECES = ['helmet','chestplate','leggings','boots','tool'];
   const MATERIALS = ['Leather','Chainmail','Iron','Gold','Diamond','Netherite','Turtle','Wood','Stone'];
+  // when the piece is a tool/weapon, the seller also picks which kind it is
+  const TOOL_TYPES = ['sword','axe','pickaxe','shovel','hoe','bow','crossbow','trident','shield'];
   function pieceLabel(p){ return p === 'tool' ? tr('trade.pieceTool') : tr('build.slots.' + p); }
+  function toolLabel(t){ return tr('trade.tools.' + t); }
 
   const FB = window.__FB__;
   const SELLER_KEY = 'minewind-seller';
@@ -47,7 +50,7 @@
   const tradeInner = document.getElementById('trade-inner');
 
   // ---- draft state for the form ----
-  const draft = { kind:'essence', item:{ piece:'chestplate', material:'Netherite', essences:[], soul:null } };
+  const draft = { kind:'essence', item:{ piece:'chestplate', material:'Netherite', toolType:'sword', essences:[], soul:null } };
   let uid = null, connected = false, staticBuilt = false, unsub = null;
 
   // Tiers that actually exist for an essence: a non-empty price that is a real tier
@@ -124,10 +127,14 @@
       }
       const pieceSel = `<select id="t-item-piece" class="trade-select">${PIECES.map(p=>`<option value="${p}"${p===draft.item.piece?' selected':''}>${escapeHtml(pieceLabel(p))}</option>`).join('')}</select>`;
       const matSel = `<select id="t-item-mat" class="trade-select">${MATERIALS.map(m=>`<option value="${m}"${m===draft.item.material?' selected':''}>${m}</option>`).join('')}</select>`;
+      const toolSel = draft.item.piece === 'tool'
+        ? `<label class="trade-field"><span class="trade-sub">${escapeHtml(tr('trade.toolType'))}</span><select id="t-item-tool" class="trade-select">${TOOL_TYPES.map(tt=>`<option value="${tt}"${tt===draft.item.toolType?' selected':''}>${escapeHtml(toolLabel(tt))}</option>`).join('')}</select></label>`
+        : '';
       body.innerHTML = `
         <div class="trade-row">
           <label class="trade-field"><span class="trade-sub">${escapeHtml(tr('trade.piece'))}</span>${pieceSel}</label>
           <label class="trade-field"><span class="trade-sub">${escapeHtml(tr('trade.material'))}</span>${matSel}</label>
+          ${toolSel}
         </div>
         <div class="trade-sub">${escapeHtml(tr('build.essences'))}</div>
         <div class="ess-list">${chips}${addBtn}</div>
@@ -147,7 +154,8 @@
       return `<span class="listing-what">${escapeHtml(tr('trade.sellsEssence'))} <strong>${escapeHtml(d.essence||'?')}</strong> ${ROMAN[(d.level||1)-1]||''}</span>`;
     }
     const it = d.item || {};
-    const head = ((it.material || '') + ' ' + (it.piece ? pieceLabel(it.piece) : '')).trim();
+    const pieceName = (it.piece === 'tool' && it.toolType) ? toolLabel(it.toolType) : (it.piece ? pieceLabel(it.piece) : '');
+    const head = ((it.material || '') + ' ' + pieceName).trim();
     const es = (it.essences||[]).map(en => `${escapeHtml(en.name)} ${ROMAN[(en.level||1)-1]||''}`).join(', ');
     let soul = '';
     if (it.soul && soulByKey[it.soul.type]){
@@ -217,6 +225,7 @@
         essences: draft.item.essences.map(en => ({ name:en.name, level:en.level })),
         soul: draft.item.soul || null
       };
+      if (doc.item.piece === 'tool') doc.item.toolType = draft.item.toolType || 'sword';
     }
 
     if (!uid){ status(tr('trade.errAuth'), false); return; }
@@ -228,7 +237,7 @@
       // reset the "what" part, keep seller
       document.getElementById('t-price').value = '';
       document.getElementById('t-note').value = '';
-      draft.item = { piece: draft.item.piece, material: draft.item.material, essences:[], soul:null };
+      draft.item = { piece: draft.item.piece, material: draft.item.material, toolType: draft.item.toolType, essences:[], soul:null };
       renderKindBody();
       if (draft.kind === 'essence'){ const ei = document.getElementById('t-ess'); if (ei) ei.value = ''; }
       btn.disabled = false;
@@ -272,7 +281,8 @@
     const il = t.closest('[data-item-lvl]');
     if (il){ draft.item.essences[+il.getAttribute('data-item-lvl')].level = +t.value; return; }
     if (t.id === 't-soul-count'){ if (draft.item.soul) draft.item.soul.count = +t.value; return; }
-    if (t.id === 't-item-piece'){ draft.item.piece = t.value; return; }
+    if (t.id === 't-item-piece'){ draft.item.piece = t.value; renderKindBody(); return; }
+    if (t.id === 't-item-tool'){ draft.item.toolType = t.value; return; }
     if (t.id === 't-item-mat'){ draft.item.material = t.value; return; }
   });
 

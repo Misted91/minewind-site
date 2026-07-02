@@ -92,6 +92,8 @@ window.__I18N_STRINGS__.fr = {
     piece: 'Pièce',
     material: 'Matériau',
     pieceTool: 'Outil / Arme',
+    toolType: 'Type',
+    tools: { sword:'Épée', axe:'Hache', pickaxe:'Pioche', shovel:'Pelle', hoe:'Houe', bow:'Arc', crossbow:'Arbalète', trident:'Trident', shield:'Bouclier' },
     pickEssence: 'Choisir une essence…',
     addItemEss: "Ajouter une essence à l'item…",
     soul: 'Âme (optionnel)',

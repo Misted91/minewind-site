@@ -50,8 +50,20 @@
   const draft = { kind:'essence', item:{ piece:'chestplate', material:'Netherite', essences:[], soul:null } };
   let uid = null, connected = false, staticBuilt = false, unsub = null;
 
-  function levelOptions(sel){
-    return ROMAN.map((r,i) => `<option value="${i+1}"${(i+1)===sel?' selected':''}>${r}</option>`).join('');
+  // Tiers that actually exist for an essence: a non-empty price that is a real tier
+  // code (short), not a free-text note like "(can stack to 4)" — so Untouchable = I..III.
+  function essLevels(name){
+    const e = essByNorm[norm(name)];
+    if (!e || !e.prices) return [1];
+    const out = [];
+    e.prices.forEach((raw, i) => {
+      const t = (raw || '').trim();
+      if (t && !t.startsWith('(') && t.length <= 10) out.push(i + 1);
+    });
+    return out.length ? out : [1];
+  }
+  function levelOptions(levels, sel){
+    return levels.map(l => `<option value="${l}"${l===sel?' selected':''}>${ROMAN[l-1]}</option>`).join('');
   }
 
   function buildStaticUI(){

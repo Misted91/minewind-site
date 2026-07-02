@@ -43,6 +43,10 @@
 
   const FB = window.__FB__;
   const SELLER_KEY = 'minewind-seller';
+  // A pseudo is reserved to the first anonymous uid that claims it (collection
+  // `sellers`). Charset is kept ASCII so the doc-id key === seller.toLowerCase()
+  // matches what the Firestore rules can recompute with .lower().
+  const PSEUDO_RE = /^[A-Za-z0-9_]{1,32}$/;
 
   // ---- DOM ----
   const tradeView = document.getElementById('trade-view');
@@ -207,6 +211,7 @@
     const price = (document.getElementById('t-price').value || '').trim().slice(0,40);
     const note = (document.getElementById('t-note').value || '').trim().slice(0,120);
     if (!seller || !price){ status(tr('trade.errFields'), false); return; }
+    if (!PSEUDO_RE.test(seller)){ status(tr('trade.errPseudo'), false); return; }
 
     const doc = { seller, price, kind: draft.kind, owner: uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp() };
@@ -232,7 +237,16 @@
     localStorage.setItem(SELLER_KEY, seller);
     const btn = document.getElementById('t-publish');
     btn.disabled = true;
-    FB.db.collection('listings').add(doc).then(() => {
+    // Claim the pseudo (create the `sellers` doc on first use), then publish.
+    // The claim must commit before the listing so the rules' get() can see it.
+    const sellerRef = FB.db.collection('sellers').doc(seller.toLowerCase());
+    sellerRef.get().then(snap => {
+      if (snap.exists){
+        if (snap.data().owner !== uid) throw { code: 'NAME_TAKEN' };
+        return null; // already ours
+      }
+      return sellerRef.set({ owner: uid }); // first come: reserve it
+    }).then(() => FB.db.collection('listings').add(doc)).then(() => {
       status(tr('trade.published'), true);
       // reset the "what" part, keep seller
       document.getElementById('t-price').value = '';
@@ -241,7 +255,11 @@
       renderKindBody();
       if (draft.kind === 'essence'){ const ei = document.getElementById('t-ess'); if (ei) ei.value = ''; }
       btn.disabled = false;
-    }).catch(err => { status((err && err.message) || tr('trade.errAuth'), false); btn.disabled = false; });
+    }).catch(err => {
+      if (err && err.code === 'NAME_TAKEN') status(tr('trade.errPseudoTaken'), false);
+      else status((err && err.message) || tr('trade.errAuth'), false);
+      btn.disabled = false;
+    });
   }
 
   // ---- events ----

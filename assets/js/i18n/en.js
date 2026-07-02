@@ -107,6 +107,8 @@ window.__I18N_STRINGS__.en = {
     sellsEssence: 'sells the essence',
     sellsItem: 'sells an item',
     errFields: 'Enter at least a username, a price and what you sell.',
+    errPseudo: 'Invalid username: 1 to 32 characters, letters/digits/_ only.',
+    errPseudoTaken: 'This username is already reserved by another player.',
     errAuth: 'Could not connect to the server — try again later.',
     offline: 'The trade module is unavailable (Firebase not loaded).'
   }

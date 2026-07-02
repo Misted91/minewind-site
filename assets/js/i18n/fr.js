@@ -107,6 +107,8 @@ window.__I18N_STRINGS__.fr = {
     sellsEssence: "vend l'essence",
     sellsItem: 'vend un item',
     errFields: 'Renseigne au moins un pseudo, un prix et ce que tu vends.',
+    errPseudo: 'Pseudo invalide : 1 à 32 caractères, lettres/chiffres/_ uniquement.',
+    errPseudoTaken: 'Ce pseudo est déjà réservé par un autre joueur.',
     errAuth: 'Connexion au serveur impossible — réessaie plus tard.',
     offline: 'Le module de trade est indisponible (Firebase non chargé).'
   }

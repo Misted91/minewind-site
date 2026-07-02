@@ -102,13 +102,13 @@
       body.innerHTML = `
         <div class="trade-row">
           <input id="t-ess" class="trade-input" type="text" list="trade-ess-list" placeholder="${escapeHtml(tr('trade.pickEssence'))}" autocomplete="off">
-          <select id="t-ess-lvl" class="trade-select">${levelOptions(1)}</select>
+          <select id="t-ess-lvl" class="trade-select">${levelOptions([1], 1)}</select>
         </div>`;
     } else {
       const chips = draft.item.essences.map((en,i) => `
         <div class="ess-chip">
           <span class="ess-chip-name">${escapeHtml(en.name)}</span>
-          <select class="trade-select" data-item-lvl="${i}">${levelOptions(en.level)}</select>
+          <select class="trade-select" data-item-lvl="${i}">${levelOptions(essLevels(en.name), en.level)}</select>
           <button class="chip-x" type="button" data-item-rm="${i}" aria-label="×">×</button>
         </div>`).join('');
       const addBtn = draft.item.essences.length < 3
@@ -257,9 +257,16 @@
 
   tradeView.addEventListener('change', (ev) => {
     const t = ev.target;
+    if (t.id === 't-ess'){
+      const e = essByNorm[norm(t.value)];
+      const lv = e ? essLevels(e.name) : [1];
+      const sel = document.getElementById('t-ess-lvl');
+      if (sel) sel.innerHTML = levelOptions(lv, lv[0]);
+      return;
+    }
     if (t.id === 't-item-ess'){
       const e = essByNorm[norm(t.value)];
-      if (e && draft.item.essences.length < 3){ draft.item.essences.push({ name:e.name, level:1 }); renderKindBody(); }
+      if (e && draft.item.essences.length < 3){ draft.item.essences.push({ name:e.name, level: essLevels(e.name)[0] }); renderKindBody(); }
       return;
     }
     const il = t.closest('[data-item-lvl]');

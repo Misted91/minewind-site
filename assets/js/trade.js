@@ -42,19 +42,27 @@
   function toolLabel(t){ return tr('trade.tools.' + t); }
 
   const FB = window.__FB__;
-  const SELLER_KEY = 'minewind-seller';
 
   // ---- DOM ----
   const tradeView = document.getElementById('trade-view');
   if (!tradeView) return;
   const tradeInner = document.getElementById('trade-inner');
+  const byId = (id) => document.getElementById(id);
 
   // ---- draft state for the form ----
   const draft = { kind:'essence', item:{ piece:'chestplate', material:'Netherite', toolType:'sword', essences:[], soul:null } };
-  let uid = null, connected = false, staticBuilt = false, unsub = null;
+  let uid = null, connected = false, staticBuilt = false;
+  // verification state
+  let isMod = false;          // is the current uid a moderator?
+  let myPseudo = null;        // my verified pseudo, or null if not verified
+  let myReq = null;           // my pending request { pseudo, contact }, or null
+  const verifiedPseudos = new Set(); // all verified pseudos, for listing badges
+  // firestore subscriptions
+  let unsubListings = null, unsubVerified = null, unsubMyReq = null,
+      unsubReqs = null, unsubMods = null;
+  let pendingReqs = [], modList = [];
 
-  // Tiers that actually exist for an essence: a non-empty price that is a real tier
-  // code (short), not a free-text note like "(can stack to 4)" — so Untouchable = I..III.
+  // Tiers that actually exist for an essence.
   function essLevels(name){
     const e = essByNorm[norm(name)];
     if (!e || !e.prices) return [1];
@@ -69,6 +77,7 @@
     return levels.map(l => `<option value="${l}"${l===sel?' selected':''}>${ROMAN[l-1]}</option>`).join('');
   }
 
+  // ---- static shell ----
   function buildStaticUI(){
     if (staticBuilt) return;
     staticBuilt = true;
@@ -78,11 +87,35 @@
         <h2 class="trade-title">${escapeHtml(tr('trade.heading'))}</h2>
         <p class="trade-intro">${escapeHtml(tr('trade.intro'))}</p>
       </div>
+      <div id="trade-gate"></div>
+      <div id="trade-admin"></div>
+      <h3 class="trade-listings-title">${escapeHtml(tr('trade.listings'))}</h3>
+      <div id="trade-listings" class="trade-listings"></div>
+    `;
+    renderGate();
+    renderAdmin();
+    renderListingsFromCache();
+  }
+
+  // ---- gate: decide what the top area shows depending on verification state ----
+  function renderGate(){
+    const gate = byId('trade-gate');
+    if (!gate) return;
+    if (!FB){ gate.innerHTML = `<p class="trade-status err">${escapeHtml(tr('trade.offline'))}</p>`; return; }
+    if (!uid){ gate.innerHTML = `<p class="trade-status">${escapeHtml(tr('trade.connecting'))}</p>`; return; }
+    if (myPseudo){ renderSellForm(gate); return; }
+    if (myReq){ renderPending(gate); return; }
+    renderRequestForm(gate);
+  }
+
+  function renderSellForm(gate){
+    gate.innerHTML = `
+      <div class="verify-banner ok">
+        <span class="verify-badge">${escapeHtml(tr('trade.badgeVerified'))}</span>
+        <span>${escapeHtml(tr('trade.sellingAs'))} <strong>${escapeHtml(myPseudo)}</strong></span>
+      </div>
       <div class="trade-form" id="trade-form">
-        <div class="trade-row">
-          <input id="t-seller" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.seller'))}" value="${escapeHtml(localStorage.getItem(SELLER_KEY) || '')}" autocomplete="off">
-          <input id="t-price" class="trade-input" type="text" maxlength="40" placeholder="${escapeHtml(tr('trade.price'))}" autocomplete="off">
-        </div>
+        <input id="t-price" class="trade-input" type="text" maxlength="40" placeholder="${escapeHtml(tr('trade.price'))}" autocomplete="off">
         <div class="trade-kind" id="trade-kind">
           <button class="kind-btn${draft.kind==='essence'?' active':''}" type="button" data-kind="essence">${escapeHtml(tr('trade.kindEssence'))}</button>
           <button class="kind-btn${draft.kind==='item'?' active':''}" type="button" data-kind="item">${escapeHtml(tr('trade.kindItem'))}</button>
@@ -91,15 +124,34 @@
         <input id="t-note" class="trade-input" type="text" maxlength="120" placeholder="${escapeHtml(tr('trade.note'))}" autocomplete="off">
         <button id="t-publish" class="trade-publish" type="button">${escapeHtml(tr('trade.publish'))}</button>
         <div id="t-status" class="trade-status"></div>
-      </div>
-      <h3 class="trade-listings-title">${escapeHtml(tr('trade.listings'))}</h3>
-      <div id="trade-listings" class="trade-listings"></div>
-    `;
+      </div>`;
     renderKindBody();
   }
 
+  function renderRequestForm(gate){
+    gate.innerHTML = `
+      <div class="verify-panel">
+        <h3 class="verify-title">${escapeHtml(tr('trade.verifyNeeded'))}</h3>
+        <p class="verify-intro">${escapeHtml(tr('trade.verifyIntro'))}</p>
+        <input id="t-req-pseudo" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.reqPseudo'))}" autocomplete="off">
+        <input id="t-req-contact" class="trade-input" type="text" maxlength="120" placeholder="${escapeHtml(tr('trade.reqContact'))}" autocomplete="off">
+        <button id="t-req-submit" class="trade-publish" type="button">${escapeHtml(tr('trade.reqSubmit'))}</button>
+        <div id="t-req-status" class="trade-status"></div>
+      </div>`;
+  }
+
+  function renderPending(gate){
+    gate.innerHTML = `
+      <div class="verify-panel pending">
+        <h3 class="verify-title">${escapeHtml(tr('trade.reqPending'))}</h3>
+        <p class="verify-intro">${escapeHtml(tr('trade.reqPendingFor'))} <strong>${escapeHtml(myReq.pseudo || '')}</strong></p>
+        <button id="t-req-cancel" class="trade-del" type="button">${escapeHtml(tr('trade.reqCancel'))}</button>
+        <div id="t-req-status" class="trade-status"></div>
+      </div>`;
+  }
+
   function renderKindBody(){
-    const body = document.getElementById('trade-kind-body');
+    const body = byId('trade-kind-body');
     if (!body) return;
     if (draft.kind === 'essence'){
       body.innerHTML = `
@@ -143,7 +195,47 @@
     }
   }
 
+  // ---- moderator admin panel ----
+  function renderAdmin(){
+    const el = byId('trade-admin');
+    if (!el) return;
+    if (!isMod){ el.innerHTML = ''; return; }
+    const reqs = pendingReqs.length
+      ? pendingReqs.map(r => `
+          <div class="mod-row">
+            <div class="mod-row-main"><strong>${escapeHtml(r.pseudo||'?')}</strong>
+              <span class="mod-contact">${escapeHtml(r.contact||'')}</span>
+              <span class="mod-uid">${escapeHtml(r.id)}</span></div>
+            <div class="mod-row-act">
+              <button class="mod-ok" type="button" data-req-ok="${escapeHtml(r.id)}">${escapeHtml(tr('trade.modApprove'))}</button>
+              <button class="mod-no" type="button" data-req-no="${escapeHtml(r.id)}">${escapeHtml(tr('trade.modReject'))}</button>
+            </div>
+          </div>`).join('')
+      : `<p class="trade-empty">${escapeHtml(tr('trade.modNoRequests'))}</p>`;
+    const mods = modList.map(m => `
+      <div class="mod-row">
+        <div class="mod-row-main"><span class="mod-uid">${escapeHtml(m.id)}${m.id===uid?' '+escapeHtml(tr('trade.modYou')):''}</span></div>
+        <div class="mod-row-act">
+          <button class="mod-no" type="button" data-mod-rm="${escapeHtml(m.id)}">${escapeHtml(tr('trade.modRemove'))}</button>
+        </div>
+      </div>`).join('');
+    el.innerHTML = `
+      <div class="mod-panel">
+        <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
+        <div class="mod-section-title">${escapeHtml(tr('trade.modRequests'))}</div>
+        <div class="mod-list">${reqs}</div>
+        <div class="mod-section-title">${escapeHtml(tr('trade.modMods'))}</div>
+        <div class="mod-list">${mods}</div>
+        <div class="trade-row">
+          <input id="t-mod-add" class="trade-input" type="text" maxlength="128" placeholder="${escapeHtml(tr('trade.modAddId'))}" autocomplete="off">
+          <button id="t-mod-add-btn" class="trade-publish" type="button">${escapeHtml(tr('trade.modAdd'))}</button>
+        </div>
+        <div id="t-mod-status" class="trade-status"></div>
+      </div>`;
+  }
+
   // ---- listings ----
+  let listingsCache = [];
   function timeAgo(ts){
     if (!ts || !ts.toDate) return '';
     try { return ts.toDate().toLocaleDateString(lang, { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
@@ -164,16 +256,20 @@
     }
     return `<span class="listing-what">${escapeHtml(tr('trade.sellsItem'))}: <strong>${escapeHtml(head || 'Item')}</strong>${es ? ' — ' + es : ''}${soul}</span>`;
   }
+  function renderListingsFromCache(){ renderListings(listingsCache); }
   function renderListings(docs){
-    const el = document.getElementById('trade-listings');
+    listingsCache = docs;
+    const el = byId('trade-listings');
     if (!el) return;
     if (!docs.length){ el.innerHTML = `<p class="trade-empty">${escapeHtml(tr('trade.empty'))}</p>`; return; }
     el.innerHTML = docs.map(doc => {
       const d = doc.data();
       const mine = uid && d.owner === uid;
+      const badge = verifiedPseudos.has(d.seller)
+        ? `<span class="verify-badge sm" title="${escapeHtml(tr('trade.badgeVerified'))}">✓</span>` : '';
       return `<div class="listing">
         <div class="listing-main">
-          <div class="listing-top"><span class="listing-seller">${escapeHtml(d.seller||'?')}</span><span class="listing-price">${escapeHtml(d.price||'')}</span></div>
+          <div class="listing-top"><span class="listing-seller">${badge}${escapeHtml(d.seller||'?')}</span><span class="listing-price">${escapeHtml(d.price||'')}</span></div>
           ${whatMarkup(d)}
           ${d.note ? `<div class="listing-note">${escapeHtml(d.note)}</div>` : ''}
         </div>
@@ -186,37 +282,108 @@
   }
 
   function status(msg, ok){
-    const el = document.getElementById('t-status');
+    const el = byId('t-status');
     if (el){ el.textContent = msg; el.className = 'trade-status' + (ok ? ' ok' : msg ? ' err' : ''); }
   }
 
+  // ---- connect / subscriptions ----
   function connect(){
     buildStaticUI();
     if (connected) return;
-    if (!FB){ status(tr('trade.offline'), false); return; }
+    if (!FB){ renderGate(); return; }
     connected = true;
-    renderListings([]); // show the empty-state placeholder until the first snapshot arrives
-    FB.ready.then(u => { uid = u; }).catch(() => { status(tr('trade.errAuth'), false); });
-    unsub = FB.db.collection('listings').orderBy('createdAt','desc').limit(100)
-      .onSnapshot(snap => renderListings(snap.docs), () => status(tr('trade.errAuth'), false));
+    // public listings + verified pseudos (readable by anyone)
+    unsubListings = FB.db.collection('listings').orderBy('createdAt','desc').limit(100)
+      .onSnapshot(snap => renderListings(snap.docs), () => {});
+    unsubVerified = FB.db.collection('verified')
+      .onSnapshot(snap => {
+        verifiedPseudos.clear();
+        snap.docs.forEach(d => { const p = d.data().pseudo; if (p) verifiedPseudos.add(p); });
+        const mineDoc = snap.docs.find(d => d.id === uid);
+        myPseudo = mineDoc ? (mineDoc.data().pseudo || null) : null;
+        renderGate();
+        renderListingsFromCache();
+      }, () => {});
+    FB.ready.then(u => {
+      uid = u;
+      // my own pending request (owner-readable)
+      unsubMyReq = FB.db.collection('requests').doc(uid)
+        .onSnapshot(doc => { myReq = doc.exists ? doc.data() : null; renderGate(); }, () => {});
+      // am I a moderator?
+      FB.db.collection('moderators').doc(uid).get().then(doc => {
+        isMod = doc.exists;
+        if (isMod) subscribeAdmin();
+        renderAdmin();
+      }).catch(() => {});
+      renderGate();
+    }).catch(() => { renderGate(); });
   }
+
+  function subscribeAdmin(){
+    if (unsubReqs) return;
+    unsubReqs = FB.db.collection('requests').orderBy('at','desc').limit(100)
+      .onSnapshot(snap => { pendingReqs = snap.docs.map(d => Object.assign({ id:d.id }, d.data())); renderAdmin(); }, () => {});
+    unsubMods = FB.db.collection('moderators')
+      .onSnapshot(snap => { modList = snap.docs.map(d => ({ id:d.id })); renderAdmin(); }, () => {});
+  }
+
+  // ---- actions ----
+  function submitRequest(){
+    if (!FB || !uid) return;
+    const pseudo = (byId('t-req-pseudo').value || '').trim().slice(0,32);
+    const contact = (byId('t-req-contact').value || '').trim().slice(0,120);
+    const st = byId('t-req-status');
+    if (!pseudo || !contact){ if (st){ st.textContent = tr('trade.reqErrFields'); st.className = 'trade-status err'; } return; }
+    const btn = byId('t-req-submit'); if (btn) btn.disabled = true;
+    FB.db.collection('requests').doc(uid).set({
+      uid, pseudo, contact, at: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => { /* myReq snapshot re-renders */ })
+      .catch(err => { if (st){ st.textContent = (err && err.message) || tr('trade.errAuth'); st.className = 'trade-status err'; } if (btn) btn.disabled = false; });
+  }
+
+  function cancelRequest(){
+    if (!FB || !uid) return;
+    FB.db.collection('requests').doc(uid).delete().catch(() => {});
+  }
+
+  function approveReq(id){
+    const r = pendingReqs.find(x => x.id === id);
+    if (!r) return;
+    FB.db.collection('verified').doc(id).set({
+      pseudo: r.pseudo, by: uid, at: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => FB.db.collection('requests').doc(id).delete())
+      .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
+  }
+  function rejectReq(id){ FB.db.collection('requests').doc(id).delete().catch(() => {}); }
+
+  function addModerator(){
+    const val = (byId('t-mod-add').value || '').trim();
+    if (!val) return;
+    FB.db.collection('moderators').doc(val).set({
+      by: uid, at: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => { const i = byId('t-mod-add'); if (i) i.value = ''; })
+      .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
+  }
+  function removeModerator(id){ FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }
+  function modStatus(msg){ const el = byId('t-mod-status'); if (el){ el.textContent = msg; el.className = 'trade-status err'; } }
 
   function publish(){
     if (!FB){ status(tr('trade.offline'), false); return; }
-    const seller = (document.getElementById('t-seller').value || '').trim().slice(0,32);
-    const price = (document.getElementById('t-price').value || '').trim().slice(0,40);
-    const note = (document.getElementById('t-note').value || '').trim().slice(0,120);
-    if (!seller || !price){ status(tr('trade.errFields'), false); return; }
+    if (!uid){ status(tr('trade.errAuth'), false); return; }
+    if (!myPseudo){ status(tr('trade.errNotVerified'), false); return; }
+    const price = (byId('t-price').value || '').trim().slice(0,40);
+    const note = (byId('t-note').value || '').trim().slice(0,120);
+    if (!price){ status(tr('trade.errFields'), false); return; }
 
-    const doc = { seller, price, kind: draft.kind, owner: uid,
+    const doc = { seller: myPseudo, price, kind: draft.kind, owner: uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp() };
     if (note) doc.note = note;
 
     if (draft.kind === 'essence'){
-      const e = essByNorm[norm(document.getElementById('t-ess').value || '')];
+      const e = essByNorm[norm(byId('t-ess').value || '')];
       if (!e){ status(tr('trade.errFields'), false); return; }
       doc.essence = e.name;
-      doc.level = +document.getElementById('t-ess-lvl').value || 1;
+      doc.level = +byId('t-ess-lvl').value || 1;
     } else {
       if (!draft.item.essences.length && !draft.item.soul){ status(tr('trade.errFields'), false); return; }
       doc.item = {
@@ -228,18 +395,15 @@
       if (doc.item.piece === 'tool') doc.item.toolType = draft.item.toolType || 'sword';
     }
 
-    if (!uid){ status(tr('trade.errAuth'), false); return; }
-    localStorage.setItem(SELLER_KEY, seller);
-    const btn = document.getElementById('t-publish');
+    const btn = byId('t-publish');
     btn.disabled = true;
     FB.db.collection('listings').add(doc).then(() => {
       status(tr('trade.published'), true);
-      // reset the "what" part, keep seller
-      document.getElementById('t-price').value = '';
-      document.getElementById('t-note').value = '';
+      byId('t-price').value = '';
+      byId('t-note').value = '';
       draft.item = { piece: draft.item.piece, material: draft.item.material, toolType: draft.item.toolType, essences:[], soul:null };
       renderKindBody();
-      if (draft.kind === 'essence'){ const ei = document.getElementById('t-ess'); if (ei) ei.value = ''; }
+      if (draft.kind === 'essence'){ const ei = byId('t-ess'); if (ei) ei.value = ''; }
       btn.disabled = false;
     }).catch(err => { status((err && err.message) || tr('trade.errAuth'), false); btn.disabled = false; });
   }
@@ -257,6 +421,12 @@
     if (sp){ draft.item.soul = { type: sp.getAttribute('data-soul-pick'), count: 1 }; renderKindBody(); return; }
     if (t.closest('[data-soul-rm]')){ draft.item.soul = null; renderKindBody(); return; }
     if (t.closest('#t-publish')){ publish(); return; }
+    if (t.closest('#t-req-submit')){ submitRequest(); return; }
+    if (t.closest('#t-req-cancel')){ cancelRequest(); return; }
+    if (t.closest('#t-mod-add-btn')){ addModerator(); return; }
+    const rok = t.closest('[data-req-ok]'); if (rok){ approveReq(rok.getAttribute('data-req-ok')); return; }
+    const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
+    const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }
     const del = t.closest('[data-del]');
     if (del){
       if (confirm(tr('trade.confirmDelete'))) FB.db.collection('listings').doc(del.getAttribute('data-del')).delete();
@@ -269,7 +439,7 @@
     if (t.id === 't-ess'){
       const e = essByNorm[norm(t.value)];
       const lv = e ? essLevels(e.name) : [1];
-      const sel = document.getElementById('t-ess-lvl');
+      const sel = byId('t-ess-lvl');
       if (sel) sel.innerHTML = levelOptions(lv, lv[0]);
       return;
     }

@@ -107,8 +107,6 @@ window.__I18N_STRINGS__.es = {
     sellsEssence: 'vende la esencia',
     sellsItem: 'vende un objeto',
     errFields: 'Indica al menos un usuario, un precio y lo que vendes.',
-    errPseudo: 'Usuario no válido: de 1 a 32 caracteres, solo letras/números/_.',
-    errPseudoTaken: 'Este usuario ya está reservado por otro jugador.',
     errAuth: 'No se pudo conectar al servidor — inténtalo más tarde.',
     offline: 'El módulo de intercambio no está disponible (Firebase no cargado).'
   }

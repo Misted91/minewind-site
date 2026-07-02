@@ -107,8 +107,6 @@ window.__I18N_STRINGS__.it = {
     sellsEssence: "vende l'essenza",
     sellsItem: 'vende un oggetto',
     errFields: 'Inserisci almeno un nome, un prezzo e cosa vendi.',
-    errPseudo: 'Nome non valido: da 1 a 32 caratteri, solo lettere/numeri/_.',
-    errPseudoTaken: 'Questo nome è già riservato da un altro giocatore.',
     errAuth: 'Impossibile connettersi al server — riprova più tardi.',
     offline: 'Il modulo di trade non è disponibile (Firebase non caricato).'
   }

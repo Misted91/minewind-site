@@ -41,6 +41,10 @@
   cursor:pointer;
 }
 
+.trade-field{ display:flex; flex-direction:column; gap:4px; }
+.trade-field .trade-sub{ margin:0; }
+.trade-field .trade-select{ width:100%; }
+
 .trade-kind{ display:flex; gap:6px; }
 .kind-btn{
   flex:1;

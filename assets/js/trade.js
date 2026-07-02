@@ -33,6 +33,11 @@
   ];
   const soulByKey = {}; SOULS.forEach(s => { soulByKey[s.key] = s; });
 
+  // item = a piece of gear (or a tool/weapon) of a given material — game terms kept in English
+  const PIECES = ['helmet','chestplate','leggings','boots','tool'];
+  const MATERIALS = ['Leather','Chainmail','Iron','Gold','Diamond','Netherite','Turtle','Wood','Stone'];
+  function pieceLabel(p){ return p === 'tool' ? tr('trade.pieceTool') : tr('build.slots.' + p); }
+
   const FB = window.__FB__;
   const SELLER_KEY = 'minewind-seller';
 
@@ -42,7 +47,7 @@
   const tradeInner = document.getElementById('trade-inner');
 
   // ---- draft state for the form ----
-  const draft = { kind:'essence', item:{ essences:[], soul:null } };
+  const draft = { kind:'essence', item:{ piece:'chestplate', material:'Netherite', essences:[], soul:null } };
   let uid = null, connected = false, staticBuilt = false, unsub = null;
 
   function levelOptions(sel){
@@ -105,7 +110,13 @@
       } else {
         soul = `<div class="soul-picker">${SOULS.map(s=>`<button class="soul-opt" type="button" data-soul-pick="${s.key}" style="--soul:${s.color}"><span class="soul-dot"></span>${escapeHtml(s.label)}</button>`).join('')}</div>`;
       }
+      const pieceSel = `<select id="t-item-piece" class="trade-select">${PIECES.map(p=>`<option value="${p}"${p===draft.item.piece?' selected':''}>${escapeHtml(pieceLabel(p))}</option>`).join('')}</select>`;
+      const matSel = `<select id="t-item-mat" class="trade-select">${MATERIALS.map(m=>`<option value="${m}"${m===draft.item.material?' selected':''}>${m}</option>`).join('')}</select>`;
       body.innerHTML = `
+        <div class="trade-row">
+          <label class="trade-field"><span class="trade-sub">${escapeHtml(tr('trade.piece'))}</span>${pieceSel}</label>
+          <label class="trade-field"><span class="trade-sub">${escapeHtml(tr('trade.material'))}</span>${matSel}</label>
+        </div>
         <div class="trade-sub">${escapeHtml(tr('build.essences'))}</div>
         <div class="ess-list">${chips}${addBtn}</div>
         <div class="trade-sub">${escapeHtml(tr('trade.soul'))}</div>
@@ -124,13 +135,14 @@
       return `<span class="listing-what">${escapeHtml(tr('trade.sellsEssence'))} <strong>${escapeHtml(d.essence||'?')}</strong> ${ROMAN[(d.level||1)-1]||''}</span>`;
     }
     const it = d.item || {};
+    const head = ((it.material || '') + ' ' + (it.piece ? pieceLabel(it.piece) : '')).trim();
     const es = (it.essences||[]).map(en => `${escapeHtml(en.name)} ${ROMAN[(en.level||1)-1]||''}`).join(', ');
     let soul = '';
     if (it.soul && soulByKey[it.soul.type]){
       const s = soulByKey[it.soul.type];
       soul = ` <span class="listing-soul" style="--soul:${s.color}"><span class="soul-dot"></span>${escapeHtml(s.label)} ×${it.soul.count}</span>`;
     }
-    return `<span class="listing-what">${escapeHtml(tr('trade.sellsItem'))}: <strong>${es || '—'}</strong>${soul}</span>`;
+    return `<span class="listing-what">${escapeHtml(tr('trade.sellsItem'))}: <strong>${escapeHtml(head || 'Item')}</strong>${es ? ' — ' + es : ''}${soul}</span>`;
   }
   function renderListings(docs){
     const el = document.getElementById('trade-listings');
@@ -187,7 +199,12 @@
       doc.level = +document.getElementById('t-ess-lvl').value || 1;
     } else {
       if (!draft.item.essences.length && !draft.item.soul){ status(tr('trade.errFields'), false); return; }
-      doc.item = { essences: draft.item.essences.map(en => ({ name:en.name, level:en.level })), soul: draft.item.soul || null };
+      doc.item = {
+        piece: draft.item.piece || 'chestplate',
+        material: draft.item.material || '',
+        essences: draft.item.essences.map(en => ({ name:en.name, level:en.level })),
+        soul: draft.item.soul || null
+      };
     }
 
     if (!uid){ status(tr('trade.errAuth'), false); return; }
@@ -199,7 +216,7 @@
       // reset the "what" part, keep seller
       document.getElementById('t-price').value = '';
       document.getElementById('t-note').value = '';
-      draft.item = { essences:[], soul:null };
+      draft.item = { piece: draft.item.piece, material: draft.item.material, essences:[], soul:null };
       renderKindBody();
       if (draft.kind === 'essence'){ const ei = document.getElementById('t-ess'); if (ei) ei.value = ''; }
       btn.disabled = false;
@@ -236,6 +253,8 @@
     const il = t.closest('[data-item-lvl]');
     if (il){ draft.item.essences[+il.getAttribute('data-item-lvl')].level = +t.value; return; }
     if (t.id === 't-soul-count'){ if (draft.item.soul) draft.item.soul.count = +t.value; return; }
+    if (t.id === 't-item-piece'){ draft.item.piece = t.value; return; }
+    if (t.id === 't-item-mat'){ draft.item.material = t.value; return; }
   });
 
   // ---- lazy connect when the trade tab is shown ----

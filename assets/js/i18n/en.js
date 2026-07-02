@@ -80,5 +80,29 @@ window.__I18N_STRINGS__.en = {
     resetConfirm: 'Reset your entire loadout? This cannot be undone.',
     level: 'Lvl',
     slots: { helmet: 'Helmet / Head', chestplate: 'Chestplate', leggings: 'Leggings', boots: 'Boots', offhand: 'Offhand' }
+  },
+  trade: {
+    tab: 'Trade',
+    heading: 'Marketplace',
+    intro: 'Post what you sell: an essence, or an item (with its essences and soul), at your price. Listings are public.',
+    seller: 'Your username',
+    price: 'Your price (e.g. 3s, 1 shegg…)',
+    kindEssence: 'An essence',
+    kindItem: 'An item',
+    pickEssence: 'Pick an essence…',
+    addItemEss: 'Add an essence to the item…',
+    soul: 'Soul (optional)',
+    note: 'Note (optional)',
+    publish: 'Post listing',
+    published: 'Listing posted!',
+    listings: 'Listings',
+    empty: 'No listings yet. Be the first!',
+    delete: 'Delete',
+    confirmDelete: 'Delete this listing?',
+    sellsEssence: 'sells the essence',
+    sellsItem: 'sells an item',
+    errFields: 'Enter at least a username, a price and what you sell.',
+    errAuth: 'Could not connect to the server — try again later.',
+    offline: 'The trade module is unavailable (Firebase not loaded).'
   }
 };

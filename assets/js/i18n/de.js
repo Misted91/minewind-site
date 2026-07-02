@@ -80,5 +80,29 @@ window.__I18N_STRINGS__.de = {
     resetConfirm: 'Gesamte Ausrüstung zurücksetzen? Das kann nicht rückgängig gemacht werden.',
     level: 'Stufe',
     slots: { helmet: 'Helm / Kopf', chestplate: 'Brustpanzer', leggings: 'Beinschutz', boots: 'Stiefel', offhand: 'Nebenhand' }
+  },
+  trade: {
+    tab: 'Trade',
+    heading: 'Marktplatz',
+    intro: 'Biete an, was du verkaufst: eine Essenz oder ein Item (mit Essenzen und Seele), zu deinem Preis. Anzeigen sind öffentlich.',
+    seller: 'Dein Benutzername',
+    price: 'Dein Preis (z. B. 3s, 1 Shegg…)',
+    kindEssence: 'Eine Essenz',
+    kindItem: 'Ein Item',
+    pickEssence: 'Essenz wählen…',
+    addItemEss: 'Essenz zum Item hinzufügen…',
+    soul: 'Seele (optional)',
+    note: 'Notiz (optional)',
+    publish: 'Anzeige veröffentlichen',
+    published: 'Anzeige veröffentlicht!',
+    listings: 'Anzeigen',
+    empty: 'Noch keine Anzeigen. Sei der Erste!',
+    delete: 'Löschen',
+    confirmDelete: 'Diese Anzeige löschen?',
+    sellsEssence: 'verkauft die Essenz',
+    sellsItem: 'verkauft ein Item',
+    errFields: 'Gib mindestens Benutzername, Preis und was du verkaufst an.',
+    errAuth: 'Verbindung zum Server fehlgeschlagen — versuche es später erneut.',
+    offline: 'Das Trade-Modul ist nicht verfügbar (Firebase nicht geladen).'
   }
 };

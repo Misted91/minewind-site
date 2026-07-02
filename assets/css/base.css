@@ -63,6 +63,14 @@ a{ color: var(--accent-text); text-decoration:none; }
 a:hover{ text-decoration:underline; }
 ::selection{ background: var(--accent-soft); }
 
+/* No blue tap-flash / weird text selection on long-press for tappable UI */
+*{ -webkit-tap-highlight-color: transparent; }
+.essence-card, .fav-btn, .filter-chip, .tab, .lang-btn, .theme-toggle,
+.random-btn, .reroll-btn, .legend-item, .guide-toggle, .set-tab,
+button{
+  -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+}
+
 /* ---------- Layout ---------- */
 .wrap{
   position:relative;

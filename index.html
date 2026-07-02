@@ -9,11 +9,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/base.css?v=20250630d">
-<link rel="stylesheet" href="assets/css/chrome.css?v=20250630d">
-<link rel="stylesheet" href="assets/css/codex.css?v=20250630d">
-<link rel="stylesheet" href="assets/css/build.css?v=20250630d">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20250630d">
+<link rel="stylesheet" href="assets/css/base.css?v=20250701a">
+<link rel="stylesheet" href="assets/css/chrome.css?v=20250701a">
+<link rel="stylesheet" href="assets/css/codex.css?v=20250701a">
+<link rel="stylesheet" href="assets/css/build.css?v=20250701a">
+<link rel="stylesheet" href="assets/css/trade.css?v=20250701a">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20250701a">
 <script>
   // set theme before paint to avoid a flash
   try {
@@ -40,6 +41,7 @@
   <nav class="tabs" id="tabs">
     <button class="tab active" type="button" data-tab="codex">Codex</button>
     <button class="tab" type="button" data-tab="build" data-i18n="build.tab">Équipement</button>
+    <button class="tab" type="button" data-tab="trade" data-i18n="trade.tab">Trade</button>
   </nav>
 
   <div id="codex-view">
@@ -78,6 +80,10 @@
     <div id="build-inner"></div>
   </div>
 
+  <div id="trade-view" hidden>
+    <div id="trade-inner"></div>
+  </div>
+
   <footer>
     <span data-i18n="footer1">Données extraites des fichiers de prix &amp; descriptions Minewind — 256 essences répertoriées.</span><br>
     <span data-i18n="footer2">Les prix sont des paliers indicatifs issus d'échanges observés par la communauté, pas des valeurs fixes.</span>
@@ -85,14 +91,19 @@
 
 </div>
 
-<script src="assets/js/data.js?v=20250630d"></script>
-<script src="assets/js/i18n/fr.js?v=20250630d"></script>
-<script src="assets/js/i18n/en.js?v=20250630d"></script>
-<script src="assets/js/i18n/de.js?v=20250630d"></script>
-<script src="assets/js/i18n/es.js?v=20250630d"></script>
-<script src="assets/js/i18n/it.js?v=20250630d"></script>
-<script src="assets/js/i18n/index.js?v=20250630d"></script>
-<script src="assets/js/codex.js?v=20250630d"></script>
-<script src="assets/js/build.js?v=20250630d"></script>
+<script src="assets/js/data.js?v=20250701a"></script>
+<script src="assets/js/i18n/fr.js?v=20250701a"></script>
+<script src="assets/js/i18n/en.js?v=20250701a"></script>
+<script src="assets/js/i18n/de.js?v=20250701a"></script>
+<script src="assets/js/i18n/es.js?v=20250701a"></script>
+<script src="assets/js/i18n/it.js?v=20250701a"></script>
+<script src="assets/js/i18n/index.js?v=20250701a"></script>
+<script src="assets/js/codex.js?v=20250701a"></script>
+<script src="assets/js/build.js?v=20250701a"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="assets/js/firebase-init.js?v=20250701a"></script>
+<script src="assets/js/trade.js?v=20250701a"></script>
 </body>
 </html>

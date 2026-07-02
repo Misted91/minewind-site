@@ -644,21 +644,24 @@
 
   // ---- tabs ----
   const TAB_KEY = 'minewind-tab';
+  const tradeView = document.getElementById('trade-view');
   let built = false;
   function setTab(tab){
-    const isBuild = tab === 'build';
-    codexView.hidden = isBuild;
-    buildView.hidden = !isBuild;
+    codexView.hidden = tab !== 'codex';
+    buildView.hidden = tab !== 'build';
+    if (tradeView) tradeView.hidden = tab !== 'trade';
     tabs.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
     localStorage.setItem(TAB_KEY, tab);
-    if (isBuild && !built){ built = true; renderBuild(); }
+    if (tab === 'build' && !built){ built = true; renderBuild(); }
+    document.dispatchEvent(new CustomEvent('tabchange', { detail: tab }));
   }
   tabs.addEventListener('click', (ev) => {
     const b = ev.target.closest('.tab');
     if (b) setTab(b.getAttribute('data-tab'));
   });
   const imported = importFromHash();
-  setTab(imported || localStorage.getItem(TAB_KEY) === 'build' ? 'build' : 'codex');
+  const savedTab = localStorage.getItem(TAB_KEY);
+  setTab(imported ? 'build' : (savedTab === 'build' || savedTab === 'trade') ? savedTab : 'codex');
 
   // ---- keep in sync with language switches from app.js ----
   document.addEventListener('codexlang', (ev) => {

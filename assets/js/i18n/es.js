@@ -80,5 +80,29 @@ window.__I18N_STRINGS__.es = {
     resetConfirm: '¿Reiniciar todo tu equipo? Esta acción no se puede deshacer.',
     level: 'Nv.',
     slots: { helmet: 'Casco / Cabeza', chestplate: 'Peto', leggings: 'Grebas', boots: 'Botas', offhand: 'Mano secundaria' }
+  },
+  trade: {
+    tab: 'Trade',
+    heading: 'Mercado',
+    intro: 'Publica lo que vendes: una esencia o un objeto (con sus esencias y su alma), a tu precio. Los anuncios son públicos.',
+    seller: 'Tu usuario',
+    price: 'Tu precio (ej: 3s, 1 shegg…)',
+    kindEssence: 'Una esencia',
+    kindItem: 'Un objeto',
+    pickEssence: 'Elegir una esencia…',
+    addItemEss: 'Añadir una esencia al objeto…',
+    soul: 'Alma (opcional)',
+    note: 'Nota (opcional)',
+    publish: 'Publicar anuncio',
+    published: '¡Anuncio publicado!',
+    listings: 'Anuncios',
+    empty: 'Aún no hay anuncios. ¡Sé el primero!',
+    delete: 'Eliminar',
+    confirmDelete: '¿Eliminar este anuncio?',
+    sellsEssence: 'vende la esencia',
+    sellsItem: 'vende un objeto',
+    errFields: 'Indica al menos un usuario, un precio y lo que vendes.',
+    errAuth: 'No se pudo conectar al servidor — inténtalo más tarde.',
+    offline: 'El módulo de intercambio no está disponible (Firebase no cargado).'
   }
 };

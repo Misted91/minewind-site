@@ -1,0 +1,49 @@
+rules_version = '2';
+
+// Trade board for the Minewind Codex.
+// No accounts: visitors are signed in ANONYMOUSLY (enable it in
+// Firebase console → Authentication → Sign-in method → Anonymous).
+// - Anyone can READ listings.
+// - Only a signed-in visitor can CREATE, and only tagged as themselves.
+// - Only the author can DELETE their own listing. No edits.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /listings/{id} {
+      allow read: if true;
+      allow update: if false;
+
+      allow delete: if request.auth != null
+                    && resource.data.owner == request.auth.uid;
+
+      allow create: if request.auth != null
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.keys().hasAll(['seller','price','kind','owner','createdAt'])
+        && request.resource.data.keys().hasOnly(
+             ['seller','price','kind','essence','level','item','note','owner','createdAt'])
+        && request.resource.data.seller is string
+        && request.resource.data.seller.size() >= 1
+        && request.resource.data.seller.size() <= 32
+        && request.resource.data.price is string
+        && request.resource.data.price.size() >= 1
+        && request.resource.data.price.size() <= 40
+        && request.resource.data.kind in ['essence','item']
+        && (!('note' in request.resource.data)
+            || (request.resource.data.note is string
+                && request.resource.data.note.size() <= 120))
+        && (!('essence' in request.resource.data)
+            || (request.resource.data.essence is string
+                && request.resource.data.essence.size() <= 60))
+        && (!('level' in request.resource.data)
+            || (request.resource.data.level is int
+                && request.resource.data.level >= 1
+                && request.resource.data.level <= 5));
+    }
+
+    // everything else is closed
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

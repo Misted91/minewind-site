@@ -80,5 +80,29 @@ window.__I18N_STRINGS__.it = {
     resetConfirm: "Reimpostare tutto l'equipaggiamento? L'azione è irreversibile.",
     level: 'Liv.',
     slots: { helmet: 'Elmo / Testa', chestplate: 'Corazza', leggings: 'Gambali', boots: 'Stivali', offhand: 'Mano secondaria' }
+  },
+  trade: {
+    tab: 'Trade',
+    heading: 'Mercato',
+    intro: "Pubblica ciò che vendi: un'essenza o un oggetto (con le sue essenze e la sua anima), al tuo prezzo. Gli annunci sono pubblici.",
+    seller: 'Il tuo nome',
+    price: 'Il tuo prezzo (es: 3s, 1 shegg…)',
+    kindEssence: "Un'essenza",
+    kindItem: 'Un oggetto',
+    pickEssence: "Scegli un'essenza…",
+    addItemEss: "Aggiungi un'essenza all'oggetto…",
+    soul: 'Anima (opzionale)',
+    note: 'Nota (opzionale)',
+    publish: "Pubblica l'annuncio",
+    published: 'Annuncio pubblicato!',
+    listings: 'Annunci',
+    empty: 'Ancora nessun annuncio. Sii il primo!',
+    delete: 'Elimina',
+    confirmDelete: 'Eliminare questo annuncio?',
+    sellsEssence: "vende l'essenza",
+    sellsItem: 'vende un oggetto',
+    errFields: 'Inserisci almeno un nome, un prezzo e cosa vendi.',
+    errAuth: 'Impossibile connettersi al server — riprova più tardi.',
+    offline: 'Il modulo di trade non è disponibile (Firebase non caricato).'
   }
 };

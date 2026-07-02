@@ -80,5 +80,29 @@ window.__I18N_STRINGS__.fr = {
     resetConfirm: 'Réinitialiser tout ton équipement ? Cette action est irréversible.',
     level: 'Niv.',
     slots: { helmet: 'Casque / Tête', chestplate: 'Plastron', leggings: 'Jambières', boots: 'Bottes', offhand: 'Main secondaire' }
+  },
+  trade: {
+    tab: 'Trade',
+    heading: 'Place de marché',
+    intro: "Publie ce que tu vends : une essence, ou un item (avec ses essences et son âme), à ton prix. Les annonces sont publiques.",
+    seller: 'Ton pseudo',
+    price: 'Ton prix (ex : 3s, 1 shegg…)',
+    kindEssence: 'Une essence',
+    kindItem: 'Un item',
+    pickEssence: 'Choisir une essence…',
+    addItemEss: "Ajouter une essence à l'item…",
+    soul: 'Âme (optionnel)',
+    note: 'Note (optionnel)',
+    publish: "Publier l'annonce",
+    published: 'Annonce publiée !',
+    listings: 'Annonces',
+    empty: 'Aucune annonce pour le moment. Sois le premier !',
+    delete: 'Supprimer',
+    confirmDelete: 'Supprimer cette annonce ?',
+    sellsEssence: "vend l'essence",
+    sellsItem: 'vend un item',
+    errFields: 'Renseigne au moins un pseudo, un prix et ce que tu vends.',
+    errAuth: 'Connexion au serveur impossible — réessaie plus tard.',
+    offline: 'Le module de trade est indisponible (Firebase non chargé).'
   }
 };

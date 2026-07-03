@@ -128,8 +128,9 @@ window.__I18N_STRINGS__.en = {
     modApprove: 'Approve',
     modReject: 'Reject',
     modMods: 'Moderators',
-    modAddId: 'New moderator UID',
+    modAddId: 'New moderator pseudo',
     modAdd: 'Add',
+    modErrNotVerified: 'No verified member with that pseudo.',
     modRemove: 'Remove',
     modYou: '(you)',
     confirmModRemove: 'Remove this moderator?'

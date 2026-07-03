@@ -128,8 +128,9 @@ window.__I18N_STRINGS__.fr = {
     modApprove: 'Approuver',
     modReject: 'Rejeter',
     modMods: 'Modérateurs',
-    modAddId: 'UID du nouveau modérateur',
+    modAddId: 'Pseudo du nouveau modérateur',
     modAdd: 'Ajouter',
+    modErrNotVerified: 'Aucun membre vérifié avec ce pseudo.',
     modRemove: 'Retirer',
     modYou: '(toi)',
     confirmModRemove: 'Retirer ce modérateur ?'

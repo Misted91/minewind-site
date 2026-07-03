@@ -371,9 +371,14 @@
   function addModerator(){
     const val = (byId('t-mod-add').value || '').trim();
     if (!val) return;
-    FB.db.collection('moderators').doc(val).set({
+    // Promote by PSEUDO, not uid (nobody knows their own uid). A pseudo can map
+    // to several uids (same person, several PCs) → make every one of them a mod.
+    const key = norm(val);
+    const uids = Object.keys(verifiedByUid).filter(u => norm(verifiedByUid[u]) === key);
+    if (!uids.length){ modStatus(tr('trade.modErrNotVerified')); return; }
+    Promise.all(uids.map(u => FB.db.collection('moderators').doc(u).set({
       by: uid, at: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => { const i = byId('t-mod-add'); if (i) i.value = ''; })
+    }))).then(() => { const i = byId('t-mod-add'); if (i) i.value = ''; })
       .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
   }
   function removeModerator(id){ FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }

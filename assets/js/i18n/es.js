@@ -128,8 +128,9 @@ window.__I18N_STRINGS__.es = {
     modApprove: 'Aprobar',
     modReject: 'Rechazar',
     modMods: 'Moderadores',
-    modAddId: 'UID del nuevo moderador',
+    modAddId: 'Alias del nuevo moderador',
     modAdd: 'Añadir',
+    modErrNotVerified: 'Ningún miembro verificado con ese alias.',
     modRemove: 'Quitar',
     modYou: '(tú)',
     confirmModRemove: '¿Quitar este moderador?'

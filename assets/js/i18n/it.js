@@ -123,6 +123,7 @@ window.__I18N_STRINGS__.it = {
     reqPendingFor: 'Nome richiesto:',
     reqCancel: 'Annulla la richiesta',
     reqErrFields: 'Inserisci un nome e un contatto.',
+    modTab: 'Moderazione',
     modPanel: 'Moderazione',
     modRequests: 'Richieste in attesa',
     modNoRequests: 'Nessuna richiesta.',

@@ -123,6 +123,7 @@ window.__I18N_STRINGS__.en = {
     reqPendingFor: 'Requested username:',
     reqCancel: 'Cancel the request',
     reqErrFields: 'Enter a username and a contact.',
+    modTab: 'Moderation',
     modPanel: 'Moderation',
     modRequests: 'Pending requests',
     modNoRequests: 'No requests.',

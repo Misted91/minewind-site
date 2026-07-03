@@ -645,11 +645,13 @@
   // ---- tabs ----
   const TAB_KEY = 'minewind-tab';
   const tradeView = document.getElementById('trade-view');
+  const modView = document.getElementById('mod-view');
   let built = false;
   function setTab(tab){
     codexView.hidden = tab !== 'codex';
     buildView.hidden = tab !== 'build';
     if (tradeView) tradeView.hidden = tab !== 'trade';
+    if (modView) modView.hidden = tab !== 'mod';
     tabs.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
     localStorage.setItem(TAB_KEY, tab);
     if (tab === 'build' && !built){ built = true; renderBuild(); }

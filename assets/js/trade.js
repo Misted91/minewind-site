@@ -47,6 +47,9 @@
   const tradeView = document.getElementById('trade-view');
   if (!tradeView) return;
   const tradeInner = document.getElementById('trade-inner');
+  const modView = document.getElementById('mod-view');
+  const modInner = document.getElementById('mod-inner');
+  const modTabBtn = document.querySelector('.tab[data-tab="mod"]');
   const byId = (id) => document.getElementById(id);
 
   // ---- draft state for the form ----
@@ -89,7 +92,6 @@
         <p class="trade-intro">${escapeHtml(tr('trade.intro'))}</p>
       </div>
       <div id="trade-gate"></div>
-      <div id="trade-admin"></div>
       <h3 class="trade-listings-title">${escapeHtml(tr('trade.listings'))}</h3>
       <div id="trade-listings" class="trade-listings"></div>
     `;
@@ -196,9 +198,11 @@
     }
   }
 
-  // ---- moderator admin panel ----
+  // ---- moderator admin panel (lives in its own "mod" tab) ----
   function renderAdmin(){
-    const el = byId('trade-admin');
+    // reveal the Modération tab only for moderators
+    if (modTabBtn) modTabBtn.hidden = !isMod;
+    const el = modInner;
     if (!el) return;
     if (!isMod){ el.innerHTML = ''; return; }
     const reqs = pendingReqs.length
@@ -302,20 +306,10 @@
     if (connected) return;
     if (!FB){ renderGate(); return; }
     connected = true;
-    // public listings + verified pseudos (readable by anyone)
+    // public listings (readable by anyone)
     unsubListings = FB.db.collection('listings').orderBy('createdAt','desc').limit(100)
       .onSnapshot(snap => renderListings(snap.docs), () => {});
-    unsubVerified = FB.db.collection('verified')
-      .onSnapshot(snap => {
-        verifiedPseudos.clear();
-        Object.keys(verifiedByUid).forEach(k => delete verifiedByUid[k]);
-        snap.docs.forEach(d => { const p = d.data().pseudo; if (p){ verifiedPseudos.add(p); verifiedByUid[d.id] = p; } });
-        const mineDoc = snap.docs.find(d => d.id === uid);
-        myPseudo = mineDoc ? (mineDoc.data().pseudo || null) : null;
-        renderGate();
-        renderAdmin();
-        renderListingsFromCache();
-      }, () => {});
+    subscribeVerified();
     FB.ready.then(u => {
       uid = u;
       // my own pending request (owner-readable)
@@ -331,12 +325,44 @@
     }).catch(() => { renderGate(); });
   }
 
+  // verified pseudos (readable by anyone) — used for seller badges, the sell
+  // gate, and moderator names. Extracted so the mod bootstrap can reuse it.
+  function subscribeVerified(){
+    if (unsubVerified) return;
+    unsubVerified = FB.db.collection('verified')
+      .onSnapshot(snap => {
+        verifiedPseudos.clear();
+        Object.keys(verifiedByUid).forEach(k => delete verifiedByUid[k]);
+        snap.docs.forEach(d => { const p = d.data().pseudo; if (p){ verifiedPseudos.add(p); verifiedByUid[d.id] = p; } });
+        const mineDoc = snap.docs.find(d => d.id === uid);
+        myPseudo = mineDoc ? (mineDoc.data().pseudo || null) : null;
+        renderGate();
+        renderAdmin();
+        renderListingsFromCache();
+      }, () => {});
+  }
+
   function subscribeAdmin(){
     if (unsubReqs) return;
     unsubReqs = FB.db.collection('requests').orderBy('at','desc').limit(100)
       .onSnapshot(snap => { pendingReqs = snap.docs.map(d => Object.assign({ id:d.id }, d.data())); renderAdmin(); }, () => {});
     unsubMods = FB.db.collection('moderators')
       .onSnapshot(snap => { modList = snap.docs.map(d => ({ id:d.id })); renderAdmin(); }, () => {});
+  }
+
+  // Lightweight bootstrap run on page load (independent of the lazy trade
+  // connect): resolves the uid and checks whether this session is a moderator,
+  // so the Modération tab can appear without first opening the Trade tab.
+  function initMod(){
+    if (!FB) return;
+    FB.ready.then(u => {
+      uid = u;
+      FB.db.collection('moderators').doc(uid).get().then(doc => {
+        isMod = doc.exists;
+        if (isMod){ subscribeVerified(); subscribeAdmin(); }
+        renderAdmin();
+      }).catch(() => {});
+    }).catch(() => {});
   }
 
   // ---- actions ----
@@ -440,10 +466,6 @@
     if (t.closest('#t-publish')){ publish(); return; }
     if (t.closest('#t-req-submit')){ submitRequest(); return; }
     if (t.closest('#t-req-cancel')){ cancelRequest(); return; }
-    if (t.closest('#t-mod-add-btn')){ addModerator(); return; }
-    const rok = t.closest('[data-req-ok]'); if (rok){ approveReq(rok.getAttribute('data-req-ok')); return; }
-    const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
-    const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }
     const del = t.closest('[data-del]');
     if (del){
       if (confirm(tr('trade.confirmDelete'))) FB.db.collection('listings').doc(del.getAttribute('data-del')).delete();
@@ -473,9 +495,20 @@
     if (t.id === 't-item-mat'){ draft.item.material = t.value; return; }
   });
 
+  // ---- moderator admin actions (panel lives in the "mod" tab) ----
+  if (modView) modView.addEventListener('click', (ev) => {
+    const t = ev.target;
+    if (t.closest('#t-mod-add-btn')){ addModerator(); return; }
+    const rok = t.closest('[data-req-ok]'); if (rok){ approveReq(rok.getAttribute('data-req-ok')); return; }
+    const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
+    const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }
+  });
+
   // ---- lazy connect when the trade tab is shown ----
   document.addEventListener('tabchange', (ev) => { if (ev.detail === 'trade') connect(); });
   if (!tradeView.hidden) connect(); else buildStaticUI();
+  // check moderator status on load so the Modération tab can appear
+  initMod();
 
   document.addEventListener('codexlang', (ev) => {
     const code = ev.detail;

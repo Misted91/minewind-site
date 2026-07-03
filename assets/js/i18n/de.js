@@ -123,6 +123,7 @@ window.__I18N_STRINGS__.de = {
     reqPendingFor: 'Angefragter Name:',
     reqCancel: 'Anfrage abbrechen',
     reqErrFields: 'Gib einen Namen und einen Kontakt an.',
+    modTab: 'Moderation',
     modPanel: 'Moderation',
     modRequests: 'Ausstehende Anfragen',
     modNoRequests: 'Keine Anfragen.',

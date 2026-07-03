@@ -123,6 +123,7 @@ window.__I18N_STRINGS__.es = {
     reqPendingFor: 'Usuario solicitado:',
     reqCancel: 'Cancelar la solicitud',
     reqErrFields: 'Indica un usuario y un contacto.',
+    modTab: 'Moderación',
     modPanel: 'Moderación',
     modRequests: 'Solicitudes pendientes',
     modNoRequests: 'Ninguna solicitud.',

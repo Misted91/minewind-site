@@ -123,6 +123,7 @@ window.__I18N_STRINGS__.fr = {
     reqPendingFor: 'Pseudo demandé :',
     reqCancel: 'Annuler la demande',
     reqErrFields: 'Renseigne un pseudo et un moyen de contact.',
+    modTab: 'Modération',
     modPanel: 'Modération',
     modRequests: 'Demandes en attente',
     modNoRequests: 'Aucune demande.',

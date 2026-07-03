@@ -57,6 +57,7 @@
   let myPseudo = null;        // my verified pseudo, or null if not verified
   let myReq = null;           // my pending request { pseudo, contact }, or null
   const verifiedPseudos = new Set(); // all verified pseudos, for listing badges
+  const verifiedByUid = {};          // uid -> pseudo, to label moderators by name
   // firestore subscriptions
   let unsubListings = null, unsubVerified = null, unsubMyReq = null,
       unsubReqs = null, unsubMods = null;
@@ -212,13 +213,20 @@
             </div>
           </div>`).join('')
       : `<p class="trade-empty">${escapeHtml(tr('trade.modNoRequests'))}</p>`;
-    const mods = modList.map(m => `
+    const mods = modList.map(m => {
+      const pseudo = verifiedByUid[m.id];
+      const you = m.id === uid ? ' ' + escapeHtml(tr('trade.modYou')) : '';
+      const main = pseudo
+        ? `<strong>${escapeHtml(pseudo)}</strong>${you}<span class="mod-uid">${escapeHtml(m.id)}</span>`
+        : `<span class="mod-uid">${escapeHtml(m.id)}${you}</span>`;
+      return `
       <div class="mod-row">
-        <div class="mod-row-main"><span class="mod-uid">${escapeHtml(m.id)}${m.id===uid?' '+escapeHtml(tr('trade.modYou')):''}</span></div>
+        <div class="mod-row-main">${main}</div>
         <div class="mod-row-act">
           <button class="mod-no" type="button" data-mod-rm="${escapeHtml(m.id)}">${escapeHtml(tr('trade.modRemove'))}</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     el.innerHTML = `
       <div class="mod-panel">
         <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
@@ -298,10 +306,12 @@
     unsubVerified = FB.db.collection('verified')
       .onSnapshot(snap => {
         verifiedPseudos.clear();
-        snap.docs.forEach(d => { const p = d.data().pseudo; if (p) verifiedPseudos.add(p); });
+        Object.keys(verifiedByUid).forEach(k => delete verifiedByUid[k]);
+        snap.docs.forEach(d => { const p = d.data().pseudo; if (p){ verifiedPseudos.add(p); verifiedByUid[d.id] = p; } });
         const mineDoc = snap.docs.find(d => d.id === uid);
         myPseudo = mineDoc ? (mineDoc.data().pseudo || null) : null;
         renderGate();
+        renderAdmin();
         renderListingsFromCache();
       }, () => {});
     FB.ready.then(u => {

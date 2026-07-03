@@ -272,7 +272,9 @@
     if (!docs.length){ el.innerHTML = `<p class="trade-empty">${escapeHtml(tr('trade.empty'))}</p>`; return; }
     el.innerHTML = docs.map(doc => {
       const d = doc.data();
-      const mine = uid && d.owner === uid;
+      // manage by pseudo: any of my PCs (same verified pseudo) can delete,
+      // with a fallback to the legacy owner-uid match for older listings.
+      const mine = (myPseudo && d.seller === myPseudo) || (uid && d.owner === uid);
       const badge = verifiedPseudos.has(d.seller)
         ? `<span class="verify-badge sm" title="${escapeHtml(tr('trade.badgeVerified'))}">✓</span>` : '';
       return `<div class="listing">

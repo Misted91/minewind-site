@@ -58,7 +58,8 @@
   // verification state
   let isMod = false;          // is the current uid a moderator?
   let myPseudo = null;        // my verified pseudo, or null if not verified
-  let myReq = null;           // my pending request { pseudo, contact }, or null
+  let myReq = null;           // my pending request { pseudo, contact, mode }, or null
+  let authMode = null;        // request flow: null = choice screen, 'create' | 'login'
   const verifiedPseudos = new Set(); // all verified pseudos, for listing badges
   const verifiedByUid = {};          // uid -> pseudo, to label moderators by name
   // firestore subscriptions
@@ -132,10 +133,33 @@
   }
 
   function renderRequestForm(gate){
+    // step 1 — let the user pick between creating an account or logging in,
+    // so moderators can tell in the panel whether to link an existing pseudo.
+    if (!authMode){
+      gate.innerHTML = `
+        <div class="verify-panel">
+          <h3 class="verify-title">${escapeHtml(tr('trade.verifyNeeded'))}</h3>
+          <p class="verify-intro">${escapeHtml(tr('trade.authChoiceIntro'))}</p>
+          <div class="auth-choice">
+            <button class="auth-opt" type="button" data-auth-mode="create">
+              <span class="auth-opt-title">${escapeHtml(tr('trade.authCreate'))}</span>
+              <span class="auth-opt-desc">${escapeHtml(tr('trade.authCreateDesc'))}</span>
+            </button>
+            <button class="auth-opt" type="button" data-auth-mode="login">
+              <span class="auth-opt-title">${escapeHtml(tr('trade.authLogin'))}</span>
+              <span class="auth-opt-desc">${escapeHtml(tr('trade.authLoginDesc'))}</span>
+            </button>
+          </div>
+        </div>`;
+      return;
+    }
+    // step 2 — the actual request form, wording adapted to the chosen mode
+    const isLogin = authMode === 'login';
     gate.innerHTML = `
       <div class="verify-panel">
-        <h3 class="verify-title">${escapeHtml(tr('trade.verifyNeeded'))}</h3>
-        <p class="verify-intro">${escapeHtml(tr('trade.verifyIntro'))}</p>
+        <button class="auth-back" type="button" data-auth-back>${escapeHtml(tr('trade.authBack'))}</button>
+        <h3 class="verify-title">${escapeHtml(tr(isLogin ? 'trade.authLogin' : 'trade.authCreate'))}</h3>
+        <p class="verify-intro">${escapeHtml(tr(isLogin ? 'trade.authLoginIntro' : 'trade.authCreateIntro'))}</p>
         <input id="t-req-pseudo" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.reqPseudo'))}" autocomplete="off">
         <input id="t-req-contact" class="trade-input" type="text" maxlength="120" placeholder="${escapeHtml(tr('trade.reqContact'))}" autocomplete="off">
         <button id="t-req-submit" class="trade-publish" type="button">${escapeHtml(tr('trade.reqSubmit'))}</button>
@@ -206,16 +230,27 @@
     if (!el) return;
     if (!isMod){ el.innerHTML = ''; return; }
     const reqs = pendingReqs.length
-      ? pendingReqs.map(r => `
+      ? pendingReqs.map(r => {
+          const isLogin = r.mode === 'login';
+          const exists = [...verifiedPseudos].some(p => norm(p) === norm(r.pseudo));
+          const modeBadge = `<span class="mod-mode ${isLogin ? 'login' : 'create'}">${escapeHtml(tr(isLogin ? 'trade.modModeLogin' : 'trade.modModeCreate'))}</span>`;
+          // hint the moderator whether the claimed pseudo already exists
+          let hint = '';
+          if (isLogin) hint = exists
+            ? `<span class="mod-hint ok">${escapeHtml(tr('trade.modPseudoExists'))}</span>`
+            : `<span class="mod-hint warn">${escapeHtml(tr('trade.modPseudoUnknown'))}</span>`;
+          else if (exists) hint = `<span class="mod-hint warn">${escapeHtml(tr('trade.modPseudoTaken'))}</span>`;
+          return `
           <div class="mod-row">
-            <div class="mod-row-main"><strong>${escapeHtml(r.pseudo||'?')}</strong>
+            <div class="mod-row-main">${modeBadge}<strong>${escapeHtml(r.pseudo||'?')}</strong>${hint}
               <span class="mod-contact">${escapeHtml(r.contact||'')}</span>
               <span class="mod-uid">${escapeHtml(r.id)}</span></div>
             <div class="mod-row-act">
               <button class="mod-ok" type="button" data-req-ok="${escapeHtml(r.id)}">${escapeHtml(tr('trade.modApprove'))}</button>
               <button class="mod-no" type="button" data-req-no="${escapeHtml(r.id)}">${escapeHtml(tr('trade.modReject'))}</button>
             </div>
-          </div>`).join('')
+          </div>`;
+        }).join('')
       : `<p class="trade-empty">${escapeHtml(tr('trade.modNoRequests'))}</p>`;
     const mods = modList.map(m => {
       const pseudo = verifiedByUid[m.id];
@@ -374,13 +409,15 @@
     if (!pseudo || !contact){ if (st){ st.textContent = tr('trade.reqErrFields'); st.className = 'trade-status err'; } return; }
     const btn = byId('t-req-submit'); if (btn) btn.disabled = true;
     FB.db.collection('requests').doc(uid).set({
-      uid, pseudo, contact, at: firebase.firestore.FieldValue.serverTimestamp()
+      uid, pseudo, contact, mode: (authMode === 'login' ? 'login' : 'create'),
+      at: firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => { /* myReq snapshot re-renders */ })
       .catch(err => { if (st){ st.textContent = (err && err.message) || tr('trade.errAuth'); st.className = 'trade-status err'; } if (btn) btn.disabled = false; });
   }
 
   function cancelRequest(){
     if (!FB || !uid) return;
+    authMode = null; // back to the create/login choice
     FB.db.collection('requests').doc(uid).delete().catch(() => {});
   }
 
@@ -464,6 +501,9 @@
     if (sp){ draft.item.soul = { type: sp.getAttribute('data-soul-pick'), count: 1 }; renderKindBody(); return; }
     if (t.closest('[data-soul-rm]')){ draft.item.soul = null; renderKindBody(); return; }
     if (t.closest('#t-publish')){ publish(); return; }
+    const am = t.closest('[data-auth-mode]');
+    if (am){ authMode = am.getAttribute('data-auth-mode'); renderGate(); return; }
+    if (t.closest('[data-auth-back]')){ authMode = null; renderGate(); return; }
     if (t.closest('#t-req-submit')){ submitRequest(); return; }
     if (t.closest('#t-req-cancel')){ cancelRequest(); return; }
     const del = t.closest('[data-del]');

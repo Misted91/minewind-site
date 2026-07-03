@@ -12,6 +12,7 @@ window.__I18N_STRINGS__.en = {
   rerollLabel: 'Re-roll:',
   footer1: 'Data extracted from Minewind price & description files — {n} essences listed.',
   footer2: 'Prices are indicative tiers from trades observed by the community, not fixed values.',
+  footerLegal: 'Legal notice & privacy',
   essencesWord: 'essences',
   metaUpdated: 'prices updated',
   metaDiscord: 'trade discord',

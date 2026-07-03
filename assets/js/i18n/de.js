@@ -12,6 +12,7 @@ window.__I18N_STRINGS__.de = {
   rerollLabel: 'Neu würfeln:',
   footer1: 'Daten aus den Minewind-Preis- und Beschreibungsdateien — {n} Essenzen erfasst.',
   footer2: 'Die Preise sind Richtwerte aus von der Community beobachteten Trades, keine festen Werte.',
+  footerLegal: 'Impressum & Datenschutz',
   essencesWord: 'Essenzen',
   metaUpdated: 'Preise aktualisiert',
   metaDiscord: 'Trade-Discord',

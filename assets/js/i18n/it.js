@@ -12,6 +12,7 @@ window.__I18N_STRINGS__.it = {
   rerollLabel: 'Rilancia:',
   footer1: 'Dati estratti dai file di prezzi e descrizioni di Minewind — {n} essenze catalogate.',
   footer2: 'I prezzi sono fasce indicative dagli scambi osservati dalla community, non valori fissi.',
+  footerLegal: 'Note legali e privacy',
   essencesWord: 'essenze',
   metaUpdated: 'prezzi aggiornati',
   metaDiscord: 'discord degli scambi',

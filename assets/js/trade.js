@@ -43,6 +43,12 @@
 
   const FB = window.__FB__;
 
+  // Listings expire automatically after this many days (a TTL policy on the
+  // `listings` collection sweeps them server-side; the client also hides expired
+  // ones immediately and each seller deletes their own expired listings on load).
+  const LISTING_TTL_DAYS = 14;
+  const LISTING_TTL_MS = LISTING_TTL_DAYS * 24 * 60 * 60 * 1000;
+
   // ---- DOM ----
   const tradeView = document.getElementById('trade-view');
   if (!tradeView) return;
@@ -93,6 +99,7 @@
       <div class="trade-head">
         <h2 class="trade-title">${escapeHtml(tr('trade.heading'))}</h2>
         <p class="trade-intro">${escapeHtml(tr('trade.intro'))}</p>
+        <p class="trade-hint">${escapeHtml(tr('trade.ttlNotice'))}</p>
       </div>
       <div class="trade-subtabs" id="trade-subtabs" role="tablist">
         <button class="trade-subtab${tradeTab==='mine'?' active':''}" type="button" role="tab" data-subtab="mine">${escapeHtml(tr('trade.myListings'))}</button>
@@ -320,6 +327,15 @@
     try { return ts.toDate().toLocaleDateString(lang, { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
     catch(e){ return ''; }
   }
+  // Small "expires on <date>" note; turns red when the listing has under 2 days
+  // left, so sellers know it's about to be auto-removed.
+  function expiryMarkup(d){
+    if (!d.expireAt || !d.expireAt.toDate) return '';
+    const ms = d.expireAt.toDate().getTime() - Date.now();
+    if (ms <= 0) return '';
+    const soon = ms < 2 * 24 * 60 * 60 * 1000;
+    return `<span class="listing-expiry${soon ? ' soon' : ''}">${escapeHtml(tr('trade.expiresOn'))} ${timeAgo(d.expireAt)}</span>`;
+  }
   function whatMarkup(d){
     if (d.kind === 'essence'){
       return `<span class="listing-what">${escapeHtml(tr('trade.sellsEssence'))} <strong>${escapeHtml(d.essence||'?')}</strong> ${ROMAN[(d.level||1)-1]||''}</span>`;
@@ -352,11 +368,21 @@
       </div>
       <div class="listing-side">
         <span class="listing-time">${timeAgo(d.createdAt)}</span>
+        ${expiryMarkup(d)}
         ${mine ? `<button class="listing-del" type="button" data-del="${escapeHtml(doc.id)}">${escapeHtml(tr('trade.delete'))}</button>` : ''}
       </div>
     </div>`;
   }
+  function isExpired(d){ return !!(d.expireAt && d.expireAt.toDate && d.expireAt.toDate().getTime() <= Date.now()); }
   function renderListings(docs){
+    // Self-cleanup: a seller removes their own expired listings on load (rules
+    // allow owner/seller delete). Belt-and-suspenders with the server-side TTL.
+    if (FB && (myPseudo || uid)){
+      docs.filter(doc => isExpired(doc.data()) && isMine(doc.data()))
+        .forEach(doc => FB.db.collection('listings').doc(doc.id).delete().catch(() => {}));
+    }
+    // Hide expired listings for everyone right away, even before the TTL sweeps them.
+    docs = docs.filter(doc => !isExpired(doc.data()));
     listingsCache = docs;
     const mineDocs = docs.filter(doc => isMine(doc.data()));
     const otherDocs = docs.filter(doc => !isMine(doc.data()));
@@ -548,7 +574,8 @@
     if (!price){ status(tr('trade.errFields'), false); return; }
 
     const doc = { seller: myPseudo, price, kind: draft.kind, owner: uid,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp() };
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      expireAt: firebase.firestore.Timestamp.fromMillis(Date.now() + LISTING_TTL_MS) };
     if (note) doc.note = note;
 
     if (draft.kind === 'essence'){

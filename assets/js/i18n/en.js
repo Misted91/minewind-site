@@ -160,6 +160,8 @@ window.__I18N_STRINGS__.en = {
     modUnban: 'Unban',
     modBanDone: 'Banned',
     confirmBan: 'Ban this pseudo and all its accounts?',
-    confirmUnban: 'Unban this account?'
+    confirmUnban: 'Unban this account?',
+    ttlNotice: 'Listings are automatically deleted after 2 weeks.',
+    expiresOn: 'Expires'
   }
 };

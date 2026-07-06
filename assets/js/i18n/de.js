@@ -160,6 +160,8 @@ window.__I18N_STRINGS__.de = {
     modUnban: 'Entbannen',
     modBanDone: 'Gebannt',
     confirmBan: 'Diesen Namen und alle seine Konten bannen?',
-    confirmUnban: 'Dieses Konto entbannen?'
+    confirmUnban: 'Dieses Konto entbannen?',
+    ttlNotice: 'Angebote werden nach 2 Wochen automatisch gelöscht.',
+    expiresOn: 'Läuft ab am'
   }
 };

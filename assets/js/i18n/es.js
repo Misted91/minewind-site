@@ -160,6 +160,8 @@ window.__I18N_STRINGS__.es = {
     modUnban: 'Desbanear',
     modBanDone: 'Baneado',
     confirmBan: '¿Banear este alias y todas sus cuentas?',
-    confirmUnban: '¿Desbanear esta cuenta?'
+    confirmUnban: '¿Desbanear esta cuenta?',
+    ttlNotice: 'Los anuncios se eliminan automáticamente tras 2 semanas.',
+    expiresOn: 'Caduca el'
   }
 };

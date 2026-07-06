@@ -160,6 +160,8 @@ window.__I18N_STRINGS__.it = {
     modUnban: 'Riammetti',
     modBanDone: 'Bandito',
     confirmBan: 'Bandire questo nome e tutti i suoi account?',
-    confirmUnban: 'Riammettere questo account?'
+    confirmUnban: 'Riammettere questo account?',
+    ttlNotice: 'Gli annunci vengono eliminati automaticamente dopo 2 settimane.',
+    expiresOn: 'Scade il'
   }
 };

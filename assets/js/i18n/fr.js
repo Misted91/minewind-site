@@ -160,6 +160,8 @@ window.__I18N_STRINGS__.fr = {
     modUnban: 'Débannir',
     modBanDone: 'Banni',
     confirmBan: 'Bannir ce pseudo et tous ses comptes ?',
-    confirmUnban: 'Débannir ce compte ?'
+    confirmUnban: 'Débannir ce compte ?',
+    ttlNotice: 'Les annonces sont automatiquement supprimées après 2 semaines.',
+    expiresOn: 'Expire le'
   }
 };

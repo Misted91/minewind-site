@@ -161,6 +161,7 @@ window.__I18N_STRINGS__.de = {
     modBanDone: 'Gebannt',
     confirmBan: 'Diesen Namen und alle seine Konten bannen?',
     confirmUnban: 'Dieses Konto entbannen?',
+    modErrBanMod: 'Ein Moderator kann nicht gebannt werden.',
     ttlNotice: 'Angebote werden nach 2 Wochen automatisch gelöscht.',
     expiresOn: 'Läuft ab am'
   }

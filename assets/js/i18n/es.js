@@ -161,6 +161,7 @@ window.__I18N_STRINGS__.es = {
     modBanDone: 'Baneado',
     confirmBan: '¿Banear este alias y todas sus cuentas?',
     confirmUnban: '¿Desbanear esta cuenta?',
+    modErrBanMod: 'No puedes banear a un moderador.',
     ttlNotice: 'Los anuncios se eliminan automáticamente tras 2 semanas.',
     expiresOn: 'Caduca el'
   }

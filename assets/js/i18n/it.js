@@ -161,6 +161,7 @@ window.__I18N_STRINGS__.it = {
     modBanDone: 'Bandito',
     confirmBan: 'Bandire questo nome e tutti i suoi account?',
     confirmUnban: 'Riammettere questo account?',
+    modErrBanMod: 'Non puoi bandire un moderatore.',
     ttlNotice: 'Gli annunci vengono eliminati automaticamente dopo 2 settimane.',
     expiresOn: 'Scade il'
   }

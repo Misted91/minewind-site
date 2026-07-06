@@ -299,9 +299,9 @@
           </div>`;
         }).join('')
       : `<p class="trade-empty">${escapeHtml(tr('trade.modNoBans'))}</p>`;
-    // Managing moderators and bans is OWNER-only. Regular moderators only see the
-    // pending requests (they onboard users via approve/reject). This stops mods
-    // from removing or banning each other — or the owner.
+    // Managing moderators (add/remove) is OWNER-only, so mods can't promote or
+    // remove each other. Any moderator can ban NORMAL users, but never another
+    // moderator or the owner (guarded in banByPseudo + the rules).
     const ownerTools = !isOwner ? '' : `
         <div class="mod-section-title">${escapeHtml(tr('trade.modMods'))}</div>
         <div class="mod-list">${mods}</div>
@@ -309,7 +309,8 @@
           <input id="t-mod-add" class="trade-input" type="text" maxlength="128" placeholder="${escapeHtml(tr('trade.modAddId'))}" autocomplete="off">
           <button id="t-mod-add-btn" class="trade-publish" type="button">${escapeHtml(tr('trade.modAdd'))}</button>
         </div>
-        <div id="t-mod-status" class="trade-status"></div>
+        <div id="t-mod-status" class="trade-status"></div>`;
+    const banTools = `
         <div class="mod-section-title">${escapeHtml(tr('trade.modBanned'))}</div>
         <div class="mod-list">${banned}</div>
         <div class="trade-row">
@@ -323,6 +324,7 @@
         <div class="mod-section-title">${escapeHtml(tr('trade.modRequests'))}</div>
         <div class="mod-list">${reqs}</div>
         ${ownerTools}
+        ${banTools}
       </div>`;
   }
 
@@ -558,7 +560,7 @@
   // re-registration. Mod rights are the one thing we strip, so a banned moderator
   // can't lift their own ban.
   function banByPseudo(){
-    if (!isOwner) return;
+    if (!isMod) return;
     const input = byId('t-mod-ban');
     const val = (input && input.value || '').trim();
     if (!val) return;
@@ -567,6 +569,10 @@
     Object.keys(verifiedByUid).forEach(u => { if (norm(verifiedByUid[u]) === key) uids.add(u); });
     pendingReqs.forEach(r => { if (norm(r.pseudo) === key) uids.add(r.id); });
     if (!uids.size){ banStatus(tr('trade.modErrNotVerified')); return; }
+    // A moderator can't ban another moderator (or the owner). If any of the
+    // pseudo's uids is a mod, refuse the whole ban. (Rules enforce this too.)
+    const modIds = new Set(modList.map(m => m.id));
+    if ([...uids].some(u => modIds.has(u))){ banStatus(tr('trade.modErrBanMod')); return; }
     if (!confirm(tr('trade.confirmBan'))) return;
     const stamp = () => ({ pseudo: val.slice(0,32), by: uid, at: firebase.firestore.FieldValue.serverTimestamp() });
     const ops = [];
@@ -582,7 +588,7 @@
       .then(() => { if (input) input.value = ''; banStatus(tr('trade.modBanDone') + ' (' + uids.size + ')', true); })
       .catch(err => banStatus((err && err.message) || tr('trade.errAuth')));
   }
-  function unban(id){ if (!isOwner) return; FB.db.collection('banned').doc(id).delete().catch(err => banStatus((err && err.message) || tr('trade.errAuth'))); }
+  function unban(id){ if (!isMod) return; FB.db.collection('banned').doc(id).delete().catch(err => banStatus((err && err.message) || tr('trade.errAuth'))); }
 
   function publish(){
     if (!FB){ status(tr('trade.offline'), false); return; }

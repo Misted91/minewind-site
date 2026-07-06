@@ -161,6 +161,7 @@ window.__I18N_STRINGS__.en = {
     modBanDone: 'Banned',
     confirmBan: 'Ban this pseudo and all its accounts?',
     confirmUnban: 'Unban this account?',
+    modErrBanMod: 'You cannot ban a moderator.',
     ttlNotice: 'Listings are automatically deleted after 2 weeks.',
     expiresOn: 'Expires'
   }

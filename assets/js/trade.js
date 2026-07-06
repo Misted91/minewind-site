@@ -55,6 +55,7 @@
   // ---- draft state for the form ----
   const draft = { kind:'essence', item:{ piece:'chestplate', material:'Netherite', toolType:'sword', essences:[], soul:null } };
   let uid = null, connected = false, staticBuilt = false;
+  let tradeTab = 'mine'; // which sub-tab is shown: 'mine' | 'others'
   // verification state
   let isMod = false;          // is the current uid a moderator?
   let myPseudo = null;        // my verified pseudo, or null if not verified
@@ -92,9 +93,17 @@
         <h2 class="trade-title">${escapeHtml(tr('trade.heading'))}</h2>
         <p class="trade-intro">${escapeHtml(tr('trade.intro'))}</p>
       </div>
-      <div id="trade-gate"></div>
-      <h3 class="trade-listings-title">${escapeHtml(tr('trade.listings'))}</h3>
-      <div id="trade-listings" class="trade-listings"></div>
+      <div class="trade-subtabs" id="trade-subtabs" role="tablist">
+        <button class="trade-subtab${tradeTab==='mine'?' active':''}" type="button" role="tab" data-subtab="mine">${escapeHtml(tr('trade.myListings'))}</button>
+        <button class="trade-subtab${tradeTab==='others'?' active':''}" type="button" role="tab" data-subtab="others">${escapeHtml(tr('trade.othersListings'))}</button>
+      </div>
+      <section class="trade-panel" data-panel="mine"${tradeTab==='mine'?'':' hidden'}>
+        <div id="trade-gate"></div>
+        <div id="trade-mine" class="trade-listings"></div>
+      </section>
+      <section class="trade-panel" data-panel="others"${tradeTab==='others'?'':' hidden'}>
+        <div id="trade-listings" class="trade-listings"></div>
+      </section>
     `;
     renderGate();
     renderAdmin();
@@ -304,30 +313,45 @@
     return `<span class="listing-what">${escapeHtml(tr('trade.sellsItem'))}: <strong>${escapeHtml(head || 'Item')}</strong>${es ? ' — ' + es : ''}${soul}</span>`;
   }
   function renderListingsFromCache(){ renderListings(listingsCache); }
+  // is this listing one of mine? any of my PCs (same verified pseudo) counts,
+  // with a fallback to the legacy owner-uid match for older listings.
+  function isMine(d){ return (myPseudo && d.seller === myPseudo) || (uid && d.owner === uid); }
+  function listingMarkup(doc){
+    const d = doc.data();
+    const mine = isMine(d);
+    const badge = verifiedPseudos.has(d.seller)
+      ? `<span class="verify-badge sm" title="${escapeHtml(tr('trade.badgeVerified'))}">✓</span>` : '';
+    return `<div class="listing">
+      <div class="listing-main">
+        <div class="listing-top"><span class="listing-seller">${badge}${escapeHtml(d.seller||'?')}</span><span class="listing-price">${escapeHtml(d.price||'')}</span></div>
+        ${whatMarkup(d)}
+        ${d.note ? `<div class="listing-note">${escapeHtml(d.note)}</div>` : ''}
+      </div>
+      <div class="listing-side">
+        <span class="listing-time">${timeAgo(d.createdAt)}</span>
+        ${mine ? `<button class="listing-del" type="button" data-del="${escapeHtml(doc.id)}">${escapeHtml(tr('trade.delete'))}</button>` : ''}
+      </div>
+    </div>`;
+  }
   function renderListings(docs){
     listingsCache = docs;
+    const mineDocs = docs.filter(doc => isMine(doc.data()));
+    const otherDocs = docs.filter(doc => !isMine(doc.data()));
+
+    // "My sales" tab — the sell form (gate) sits above; only list once the
+    // seller is verified, otherwise the gate already explains what to do.
+    const mineEl = byId('trade-mine');
+    if (mineEl){
+      mineEl.innerHTML = !myPseudo ? '' : (mineDocs.length
+        ? mineDocs.map(listingMarkup).join('')
+        : `<p class="trade-empty">${escapeHtml(tr('trade.myEmpty'))}</p>`);
+    }
+
     const el = byId('trade-listings');
     if (!el) return;
-    if (!docs.length){ el.innerHTML = `<p class="trade-empty">${escapeHtml(tr('trade.empty'))}</p>`; return; }
-    el.innerHTML = docs.map(doc => {
-      const d = doc.data();
-      // manage by pseudo: any of my PCs (same verified pseudo) can delete,
-      // with a fallback to the legacy owner-uid match for older listings.
-      const mine = (myPseudo && d.seller === myPseudo) || (uid && d.owner === uid);
-      const badge = verifiedPseudos.has(d.seller)
-        ? `<span class="verify-badge sm" title="${escapeHtml(tr('trade.badgeVerified'))}">✓</span>` : '';
-      return `<div class="listing">
-        <div class="listing-main">
-          <div class="listing-top"><span class="listing-seller">${badge}${escapeHtml(d.seller||'?')}</span><span class="listing-price">${escapeHtml(d.price||'')}</span></div>
-          ${whatMarkup(d)}
-          ${d.note ? `<div class="listing-note">${escapeHtml(d.note)}</div>` : ''}
-        </div>
-        <div class="listing-side">
-          <span class="listing-time">${timeAgo(d.createdAt)}</span>
-          ${mine ? `<button class="listing-del" type="button" data-del="${escapeHtml(doc.id)}">${escapeHtml(tr('trade.delete'))}</button>` : ''}
-        </div>
-      </div>`;
-    }).join('');
+    el.innerHTML = otherDocs.length
+      ? otherDocs.map(listingMarkup).join('')
+      : `<p class="trade-empty">${escapeHtml(tr('trade.empty'))}</p>`;
   }
 
   function status(msg, ok){
@@ -489,8 +513,19 @@
   }
 
   // ---- events ----
+  function switchSubtab(tab){
+    if (tab !== 'mine' && tab !== 'others') return;
+    tradeTab = tab;
+    document.querySelectorAll('#trade-subtabs .trade-subtab').forEach(b =>
+      b.classList.toggle('active', b.getAttribute('data-subtab') === tab));
+    document.querySelectorAll('.trade-panel[data-panel]').forEach(p =>
+      p.hidden = p.getAttribute('data-panel') !== tab);
+  }
+
   tradeView.addEventListener('click', (ev) => {
     const t = ev.target;
+    const sub = t.closest('[data-subtab]');
+    if (sub){ switchSubtab(sub.getAttribute('data-subtab')); return; }
     const kind = t.closest('[data-kind]');
     if (kind){ draft.kind = kind.getAttribute('data-kind');
       document.querySelectorAll('#trade-kind .kind-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-kind') === draft.kind));

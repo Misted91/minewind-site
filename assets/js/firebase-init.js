@@ -15,7 +15,7 @@
   // outside the real site. Paste the reCAPTCHA v3 *site key* from
   // Firebase console → App Check → register this web app (reCAPTCHA v3).
   // Left empty = App Check disabled (site still works); fill it to enforce.
-  var RECAPTCHA_SITE_KEY = "";
+  var RECAPTCHA_SITE_KEY = "6Le9QEctAAAAAOfiAEYf0mEabmhUilZbMgDBcTGU";
 
   if (typeof firebase === 'undefined' || !firebase.initializeApp){
     window.__FB__ = null; // CDN blocked / offline — trade tab shows a fallback message
@@ -23,16 +23,15 @@
   }
   firebase.initializeApp(config);
 
-  // App Check is activated ONLY once a real site key is set above. With an empty
-  // key we skip it entirely so the site keeps working (no key = no enforcement).
-  if (firebase.appCheck && RECAPTCHA_SITE_KEY){
-    // On localhost / file:// there is no reCAPTCHA: enable the debug provider so
-    // dev still works. The console prints a debug token to whitelist once in
-    // Firebase console → App Check → Manage debug tokens.
-    var host = location.hostname;
-    var isLocal = location.protocol === 'file:' ||
-                  host === 'localhost' || host === '127.0.0.1' || host === '';
-    if (isLocal) self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  // App Check protects the DEPLOYED public site. It is activated only when a
+  // site key is set AND we're not running locally: localhost/file:// has no
+  // reCAPTCHA, so activating there would just break Firestore (403 on the debug
+  // token exchange). Local dev therefore runs without App Check, exactly like
+  // before — the protection that matters is on the real domain.
+  var host = location.hostname;
+  var isLocal = location.protocol === 'file:' ||
+                host === 'localhost' || host === '127.0.0.1' || host === '';
+  if (firebase.appCheck && RECAPTCHA_SITE_KEY && !isLocal){
     // Activate before touching Firestore/Auth. Guarded so an SDK that failed to
     // load never breaks the trade tab.
     try {

@@ -544,8 +544,10 @@
 
   // Ban a PSEUDO → bans every uid that maps to it. A pseudo can span several PCs
   // (each its own uid); we collect them from the verified map and from any pending
-  // request under that pseudo, then: mark each uid banned, strip its verification,
-  // demote it if it was a mod, drop its pending request, and delete its listings.
+  // request under that pseudo. A ban only BLOCKS the accounts and removes what they
+  // sell — we KEEP their verification so that unbanning fully restores them without
+  // re-registration. Mod rights are the one thing we strip, so a banned moderator
+  // can't lift their own ban.
   function banByPseudo(){
     const input = byId('t-mod-ban');
     const val = (input && input.value || '').trim();
@@ -560,11 +562,9 @@
     const ops = [];
     uids.forEach(u => {
       ops.push(FB.db.collection('banned').doc(u).set(stamp()));
-      ops.push(FB.db.collection('verified').doc(u).delete());
       ops.push(FB.db.collection('moderators').doc(u).delete().catch(() => {}));
-      ops.push(FB.db.collection('requests').doc(u).delete().catch(() => {}));
     });
-    // also remove the seller's listings (managed by pseudo)
+    // remove only what they sell — their listings (managed by pseudo)
     ops.push(FB.db.collection('listings').where('seller','==', val).get()
       .then(snap => Promise.all(snap.docs.map(d => d.ref.delete())))
       .catch(() => {}));

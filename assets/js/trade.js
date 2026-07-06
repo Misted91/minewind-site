@@ -427,7 +427,7 @@
       // am I a moderator?
       FB.db.collection('moderators').doc(uid).get().then(doc => {
         isMod = doc.exists;
-        if (isMod) subscribeAdmin();
+        if (isMod){ subscribeAdmin(); sweepExpiredListings(); }
         renderAdmin();
       }).catch(() => {});
       renderGate();
@@ -449,6 +449,16 @@
         renderAdmin();
         renderListingsFromCache();
       }, () => {});
+  }
+
+  // Moderator sweep: on every mod page load, delete ALL expired listings — even
+  // those of sellers who never return (rules allow mods to delete any listing).
+  // This is our free replacement for a server-side TTL policy (Blaze-only).
+  function sweepExpiredListings(){
+    if (!FB || !isMod) return;
+    FB.db.collection('listings').where('expireAt','<=', firebase.firestore.Timestamp.now()).get()
+      .then(snap => Promise.all(snap.docs.map(d => d.ref.delete())))
+      .catch(() => {});
   }
 
   function subscribeAdmin(){
@@ -478,7 +488,7 @@
       uid = u;
       FB.db.collection('moderators').doc(uid).get().then(doc => {
         isMod = doc.exists;
-        if (isMod){ subscribeVerified(); subscribeAdmin(); }
+        if (isMod){ subscribeVerified(); subscribeAdmin(); sweepExpiredListings(); }
         renderAdmin();
       }).catch(() => {});
     }).catch(() => {});

@@ -64,6 +64,7 @@
   let tradeTab = 'mine'; // which sub-tab is shown: 'mine' | 'others'
   // verification state
   let isMod = false;          // is the current uid a moderator?
+  let isOwner = false;        // is the current uid the OWNER (super-admin)? — manages mods + bans
   let myPseudo = null;        // my verified pseudo, or null if not verified
   let myReq = null;           // my pending request { pseudo, contact, mode }, or null
   let iAmBanned = false;      // is the current uid banned?
@@ -298,11 +299,10 @@
           </div>`;
         }).join('')
       : `<p class="trade-empty">${escapeHtml(tr('trade.modNoBans'))}</p>`;
-    el.innerHTML = `
-      <div class="mod-panel">
-        <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
-        <div class="mod-section-title">${escapeHtml(tr('trade.modRequests'))}</div>
-        <div class="mod-list">${reqs}</div>
+    // Managing moderators and bans is OWNER-only. Regular moderators only see the
+    // pending requests (they onboard users via approve/reject). This stops mods
+    // from removing or banning each other — or the owner.
+    const ownerTools = !isOwner ? '' : `
         <div class="mod-section-title">${escapeHtml(tr('trade.modMods'))}</div>
         <div class="mod-list">${mods}</div>
         <div class="trade-row">
@@ -316,7 +316,13 @@
           <input id="t-mod-ban" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.modBanId'))}" autocomplete="off">
           <button id="t-mod-ban-btn" class="trade-del" type="button">${escapeHtml(tr('trade.modBan'))}</button>
         </div>
-        <div id="t-ban-status" class="trade-status"></div>
+        <div id="t-ban-status" class="trade-status"></div>`;
+    el.innerHTML = `
+      <div class="mod-panel">
+        <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
+        <div class="mod-section-title">${escapeHtml(tr('trade.modRequests'))}</div>
+        <div class="mod-list">${reqs}</div>
+        ${ownerTools}
       </div>`;
   }
 
@@ -427,6 +433,7 @@
       // am I a moderator?
       FB.db.collection('moderators').doc(uid).get().then(doc => {
         isMod = doc.exists;
+        isOwner = doc.exists && !!(doc.data() && doc.data().owner === true);
         if (isMod){ subscribeAdmin(); sweepExpiredListings(); }
         renderAdmin();
       }).catch(() => {});
@@ -488,6 +495,7 @@
       uid = u;
       FB.db.collection('moderators').doc(uid).get().then(doc => {
         isMod = doc.exists;
+        isOwner = doc.exists && !!(doc.data() && doc.data().owner === true);
         if (isMod){ subscribeVerified(); subscribeAdmin(); sweepExpiredListings(); }
         renderAdmin();
       }).catch(() => {});
@@ -526,6 +534,7 @@
   function rejectReq(id){ FB.db.collection('requests').doc(id).delete().catch(() => {}); }
 
   function addModerator(){
+    if (!isOwner) return;
     const val = (byId('t-mod-add').value || '').trim();
     if (!val) return;
     // Promote by PSEUDO, not uid (nobody knows their own uid). A pseudo can map
@@ -538,7 +547,7 @@
     }))).then(() => { const i = byId('t-mod-add'); if (i) i.value = ''; })
       .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
   }
-  function removeModerator(id){ FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }
+  function removeModerator(id){ if (!isOwner) return; FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }
   function modStatus(msg){ const el = byId('t-mod-status'); if (el){ el.textContent = msg; el.className = 'trade-status err'; } }
   function banStatus(msg, ok){ const el = byId('t-ban-status'); if (el){ el.textContent = msg; el.className = 'trade-status' + (ok ? ' ok' : msg ? ' err' : ''); } }
 
@@ -549,6 +558,7 @@
   // re-registration. Mod rights are the one thing we strip, so a banned moderator
   // can't lift their own ban.
   function banByPseudo(){
+    if (!isOwner) return;
     const input = byId('t-mod-ban');
     const val = (input && input.value || '').trim();
     if (!val) return;
@@ -572,7 +582,7 @@
       .then(() => { if (input) input.value = ''; banStatus(tr('trade.modBanDone') + ' (' + uids.size + ')', true); })
       .catch(err => banStatus((err && err.message) || tr('trade.errAuth')));
   }
-  function unban(id){ FB.db.collection('banned').doc(id).delete().catch(err => banStatus((err && err.message) || tr('trade.errAuth'))); }
+  function unban(id){ if (!isOwner) return; FB.db.collection('banned').doc(id).delete().catch(err => banStatus((err && err.message) || tr('trade.errAuth'))); }
 
   function publish(){
     if (!FB){ status(tr('trade.offline'), false); return; }

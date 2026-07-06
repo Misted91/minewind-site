@@ -151,6 +151,15 @@ window.__I18N_STRINGS__.fr = {
     modErrNotVerified: 'Aucun membre vérifié avec ce pseudo.',
     modRemove: 'Retirer',
     modYou: '(toi)',
-    confirmModRemove: 'Retirer ce modérateur ?'
+    confirmModRemove: 'Retirer ce modérateur ?',
+    banned: 'Tu as été banni du marché.',
+    modBanned: 'Bannis',
+    modNoBans: 'Aucun banni.',
+    modBanId: 'Pseudo à bannir',
+    modBan: 'Bannir',
+    modUnban: 'Débannir',
+    modBanDone: 'Banni',
+    confirmBan: 'Bannir ce pseudo et tous ses comptes ?',
+    confirmUnban: 'Débannir ce compte ?'
   }
 };

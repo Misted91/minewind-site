@@ -151,6 +151,15 @@ window.__I18N_STRINGS__.de = {
     modErrNotVerified: 'Kein verifiziertes Mitglied mit diesem Pseudonym.',
     modRemove: 'Entfernen',
     modYou: '(du)',
-    confirmModRemove: 'Diesen Moderator entfernen?'
+    confirmModRemove: 'Diesen Moderator entfernen?',
+    banned: 'Du wurdest vom Markt gebannt.',
+    modBanned: 'Gebannt',
+    modNoBans: 'Keine Banns.',
+    modBanId: 'Zu bannender Name',
+    modBan: 'Bannen',
+    modUnban: 'Entbannen',
+    modBanDone: 'Gebannt',
+    confirmBan: 'Diesen Namen und alle seine Konten bannen?',
+    confirmUnban: 'Dieses Konto entbannen?'
   }
 };

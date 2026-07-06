@@ -60,13 +60,14 @@
   let isMod = false;          // is the current uid a moderator?
   let myPseudo = null;        // my verified pseudo, or null if not verified
   let myReq = null;           // my pending request { pseudo, contact, mode }, or null
+  let iAmBanned = false;      // is the current uid banned?
   let authMode = null;        // request flow: null = choice screen, 'create' | 'login'
   const verifiedPseudos = new Set(); // all verified pseudos, for listing badges
   const verifiedByUid = {};          // uid -> pseudo, to label moderators by name
   // firestore subscriptions
   let unsubListings = null, unsubVerified = null, unsubMyReq = null,
-      unsubReqs = null, unsubMods = null;
-  let pendingReqs = [], modList = [];
+      unsubReqs = null, unsubMods = null, unsubBanned = null, unsubMyBanned = null;
+  let pendingReqs = [], modList = [], bannedList = [];
 
   // Tiers that actually exist for an essence.
   function essLevels(name){
@@ -116,6 +117,7 @@
     if (!gate) return;
     if (!FB){ gate.innerHTML = `<p class="trade-status err">${escapeHtml(tr('trade.offline'))}</p>`; return; }
     if (!uid){ gate.innerHTML = `<p class="trade-status">${escapeHtml(tr('trade.connecting'))}</p>`; return; }
+    if (iAmBanned){ gate.innerHTML = `<div class="verify-banner err"><span>${escapeHtml(tr('trade.banned'))}</span></div>`; return; }
     if (myPseudo){ renderSellForm(gate); return; }
     if (myReq){ renderPending(gate); return; }
     renderRequestForm(gate);
@@ -275,6 +277,20 @@
         </div>
       </div>`;
     }).join('');
+    const banned = bannedList.length
+      ? bannedList.map(b => {
+          const main = b.pseudo
+            ? `<strong>${escapeHtml(b.pseudo)}</strong><span class="mod-uid">${escapeHtml(b.id)}</span>`
+            : `<span class="mod-uid">${escapeHtml(b.id)}</span>`;
+          return `
+          <div class="mod-row">
+            <div class="mod-row-main">${main}</div>
+            <div class="mod-row-act">
+              <button class="mod-ok" type="button" data-ban-rm="${escapeHtml(b.id)}">${escapeHtml(tr('trade.modUnban'))}</button>
+            </div>
+          </div>`;
+        }).join('')
+      : `<p class="trade-empty">${escapeHtml(tr('trade.modNoBans'))}</p>`;
     el.innerHTML = `
       <div class="mod-panel">
         <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
@@ -287,6 +303,13 @@
           <button id="t-mod-add-btn" class="trade-publish" type="button">${escapeHtml(tr('trade.modAdd'))}</button>
         </div>
         <div id="t-mod-status" class="trade-status"></div>
+        <div class="mod-section-title">${escapeHtml(tr('trade.modBanned'))}</div>
+        <div class="mod-list">${banned}</div>
+        <div class="trade-row">
+          <input id="t-mod-ban" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.modBanId'))}" autocomplete="off">
+          <button id="t-mod-ban-btn" class="trade-del" type="button">${escapeHtml(tr('trade.modBan'))}</button>
+        </div>
+        <div id="t-ban-status" class="trade-status"></div>
       </div>`;
   }
 
@@ -374,6 +397,7 @@
       // my own pending request (owner-readable)
       unsubMyReq = FB.db.collection('requests').doc(uid)
         .onSnapshot(doc => { myReq = doc.exists ? doc.data() : null; renderGate(); }, () => {});
+      subscribeMyBanned();
       // am I a moderator?
       FB.db.collection('moderators').doc(uid).get().then(doc => {
         isMod = doc.exists;
@@ -407,6 +431,16 @@
       .onSnapshot(snap => { pendingReqs = snap.docs.map(d => Object.assign({ id:d.id }, d.data())); renderAdmin(); }, () => {});
     unsubMods = FB.db.collection('moderators')
       .onSnapshot(snap => { modList = snap.docs.map(d => ({ id:d.id })); renderAdmin(); }, () => {});
+    unsubBanned = FB.db.collection('banned')
+      .onSnapshot(snap => { bannedList = snap.docs.map(d => Object.assign({ id:d.id }, d.data())); renderAdmin(); }, () => {});
+  }
+
+  // Watch my own ban doc so a banned visitor immediately sees the notice and
+  // loses the sell form, even without a moderator's list.
+  function subscribeMyBanned(){
+    if (unsubMyBanned || !FB || !uid) return;
+    unsubMyBanned = FB.db.collection('banned').doc(uid)
+      .onSnapshot(doc => { iAmBanned = doc.exists; renderGate(); }, () => {});
   }
 
   // Lightweight bootstrap run on page load (independent of the lazy trade
@@ -426,7 +460,7 @@
 
   // ---- actions ----
   function submitRequest(){
-    if (!FB || !uid) return;
+    if (!FB || !uid || iAmBanned) return;
     const pseudo = (byId('t-req-pseudo').value || '').trim().slice(0,32);
     const contact = (byId('t-req-contact').value || '').trim().slice(0,120);
     const st = byId('t-req-status');
@@ -470,10 +504,44 @@
   }
   function removeModerator(id){ FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }
   function modStatus(msg){ const el = byId('t-mod-status'); if (el){ el.textContent = msg; el.className = 'trade-status err'; } }
+  function banStatus(msg, ok){ const el = byId('t-ban-status'); if (el){ el.textContent = msg; el.className = 'trade-status' + (ok ? ' ok' : msg ? ' err' : ''); } }
+
+  // Ban a PSEUDO → bans every uid that maps to it. A pseudo can span several PCs
+  // (each its own uid); we collect them from the verified map and from any pending
+  // request under that pseudo, then: mark each uid banned, strip its verification,
+  // demote it if it was a mod, drop its pending request, and delete its listings.
+  function banByPseudo(){
+    const input = byId('t-mod-ban');
+    const val = (input && input.value || '').trim();
+    if (!val) return;
+    const key = norm(val);
+    const uids = new Set();
+    Object.keys(verifiedByUid).forEach(u => { if (norm(verifiedByUid[u]) === key) uids.add(u); });
+    pendingReqs.forEach(r => { if (norm(r.pseudo) === key) uids.add(r.id); });
+    if (!uids.size){ banStatus(tr('trade.modErrNotVerified')); return; }
+    if (!confirm(tr('trade.confirmBan'))) return;
+    const stamp = () => ({ pseudo: val.slice(0,32), by: uid, at: firebase.firestore.FieldValue.serverTimestamp() });
+    const ops = [];
+    uids.forEach(u => {
+      ops.push(FB.db.collection('banned').doc(u).set(stamp()));
+      ops.push(FB.db.collection('verified').doc(u).delete());
+      ops.push(FB.db.collection('moderators').doc(u).delete().catch(() => {}));
+      ops.push(FB.db.collection('requests').doc(u).delete().catch(() => {}));
+    });
+    // also remove the seller's listings (managed by pseudo)
+    ops.push(FB.db.collection('listings').where('seller','==', val).get()
+      .then(snap => Promise.all(snap.docs.map(d => d.ref.delete())))
+      .catch(() => {}));
+    Promise.all(ops)
+      .then(() => { if (input) input.value = ''; banStatus(tr('trade.modBanDone') + ' (' + uids.size + ')', true); })
+      .catch(err => banStatus((err && err.message) || tr('trade.errAuth')));
+  }
+  function unban(id){ FB.db.collection('banned').doc(id).delete().catch(err => banStatus((err && err.message) || tr('trade.errAuth'))); }
 
   function publish(){
     if (!FB){ status(tr('trade.offline'), false); return; }
     if (!uid){ status(tr('trade.errAuth'), false); return; }
+    if (iAmBanned){ status(tr('trade.banned'), false); return; }
     if (!myPseudo){ status(tr('trade.errNotVerified'), false); return; }
     const price = (byId('t-price').value || '').trim().slice(0,40);
     const note = (byId('t-note').value || '').trim().slice(0,120);
@@ -574,9 +642,11 @@
   if (modView) modView.addEventListener('click', (ev) => {
     const t = ev.target;
     if (t.closest('#t-mod-add-btn')){ addModerator(); return; }
+    if (t.closest('#t-mod-ban-btn')){ banByPseudo(); return; }
     const rok = t.closest('[data-req-ok]'); if (rok){ approveReq(rok.getAttribute('data-req-ok')); return; }
     const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
     const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }
+    const brm = t.closest('[data-ban-rm]'); if (brm){ if (confirm(tr('trade.confirmUnban'))) unban(brm.getAttribute('data-ban-rm')); return; }
   });
 
   // ---- lazy connect when the trade tab is shown ----

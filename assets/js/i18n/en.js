@@ -151,6 +151,15 @@ window.__I18N_STRINGS__.en = {
     modErrNotVerified: 'No verified member with that pseudo.',
     modRemove: 'Remove',
     modYou: '(you)',
-    confirmModRemove: 'Remove this moderator?'
+    confirmModRemove: 'Remove this moderator?',
+    banned: 'You have been banned from the market.',
+    modBanned: 'Banned',
+    modNoBans: 'No bans.',
+    modBanId: 'Pseudo to ban',
+    modBan: 'Ban',
+    modUnban: 'Unban',
+    modBanDone: 'Banned',
+    confirmBan: 'Ban this pseudo and all its accounts?',
+    confirmUnban: 'Unban this account?'
   }
 };

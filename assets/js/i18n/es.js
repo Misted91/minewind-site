@@ -151,6 +151,15 @@ window.__I18N_STRINGS__.es = {
     modErrNotVerified: 'Ningún miembro verificado con ese alias.',
     modRemove: 'Quitar',
     modYou: '(tú)',
-    confirmModRemove: '¿Quitar este moderador?'
+    confirmModRemove: '¿Quitar este moderador?',
+    banned: 'Has sido baneado del mercado.',
+    modBanned: 'Baneados',
+    modNoBans: 'Ningún baneo.',
+    modBanId: 'Alias a banear',
+    modBan: 'Banear',
+    modUnban: 'Desbanear',
+    modBanDone: 'Baneado',
+    confirmBan: '¿Banear este alias y todas sus cuentas?',
+    confirmUnban: '¿Desbanear esta cuenta?'
   }
 };

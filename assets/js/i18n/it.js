@@ -151,6 +151,15 @@ window.__I18N_STRINGS__.it = {
     modErrNotVerified: 'Nessun membro verificato con questo pseudonimo.',
     modRemove: 'Rimuovi',
     modYou: '(tu)',
-    confirmModRemove: 'Rimuovere questo moderatore?'
+    confirmModRemove: 'Rimuovere questo moderatore?',
+    banned: 'Sei stato bandito dal mercato.',
+    modBanned: 'Banditi',
+    modNoBans: 'Nessun bando.',
+    modBanId: 'Nome da bandire',
+    modBan: 'Bandisci',
+    modUnban: 'Riammetti',
+    modBanDone: 'Bandito',
+    confirmBan: 'Bandire questo nome e tutti i suoi account?',
+    confirmUnban: 'Riammettere questo account?'
   }
 };

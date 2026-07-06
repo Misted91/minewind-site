@@ -175,6 +175,11 @@
   padding:10px 14px; margin-bottom:12px;
 }
 .verify-banner strong{ color: var(--text); }
+.verify-banner.err{
+  color: var(--danger, #e0454a);
+  border-color: var(--danger, #e0454a);
+  background: color-mix(in srgb, var(--danger, #e0454a) 12%, var(--panel));
+}
 
 .verify-panel{
   background: var(--panel);

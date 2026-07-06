@@ -43,9 +43,9 @@
 
   const FB = window.__FB__;
 
-  // Listings expire automatically after this many days (a TTL policy on the
-  // `listings` collection sweeps them server-side; the client also hides expired
-  // ones immediately and each seller deletes their own expired listings on load).
+  // Listings expire automatically after this many days (each seller deletes their
+  // own expired listings on load; moderators sweep the rest — see trade-mod.js).
+  // The client also hides expired listings immediately.
   const LISTING_TTL_DAYS = 14;
   const LISTING_TTL_MS = LISTING_TTL_DAYS * 24 * 60 * 60 * 1000;
 
@@ -53,9 +53,6 @@
   const tradeView = document.getElementById('trade-view');
   if (!tradeView) return;
   const tradeInner = document.getElementById('trade-inner');
-  const modView = document.getElementById('mod-view');
-  const modInner = document.getElementById('mod-inner');
-  const modTabBtn = document.querySelector('.tab[data-tab="mod"]');
   const byId = (id) => document.getElementById(id);
 
   // ---- draft state for the form ----
@@ -63,8 +60,6 @@
   let uid = null, connected = false, staticBuilt = false;
   let tradeTab = 'mine'; // which sub-tab is shown: 'mine' | 'others'
   // verification state
-  let isMod = false;          // is the current uid a moderator?
-  let isOwner = false;        // is the current uid the OWNER (super-admin)? — manages mods + bans
   let myPseudo = null;        // my verified pseudo, or null if not verified
   let myReq = null;           // my pending request { pseudo, contact, mode }, or null
   let iAmBanned = false;      // is the current uid banned?
@@ -72,9 +67,7 @@
   const verifiedPseudos = new Set(); // all verified pseudos, for listing badges
   const verifiedByUid = {};          // uid -> pseudo, to label moderators by name
   // firestore subscriptions
-  let unsubListings = null, unsubVerified = null, unsubMyReq = null,
-      unsubReqs = null, unsubMods = null, unsubBanned = null, unsubMyBanned = null;
-  let pendingReqs = [], modList = [], bannedList = [];
+  let unsubListings = null, unsubVerified = null, unsubMyReq = null, unsubMyBanned = null;
 
   // Tiers that actually exist for an essence.
   function essLevels(name){
@@ -115,7 +108,7 @@
       </section>
     `;
     renderGate();
-    renderAdmin();
+    if (CTX.renderAdmin) CTX.renderAdmin();
     renderListingsFromCache();
   }
 
@@ -241,93 +234,6 @@
     }
   }
 
-  // ---- moderator admin panel (lives in its own "mod" tab) ----
-  function renderAdmin(){
-    // reveal the Modération tab only for moderators
-    if (modTabBtn) modTabBtn.hidden = !isMod;
-    const el = modInner;
-    if (!el) return;
-    if (!isMod){ el.innerHTML = ''; return; }
-    const reqs = pendingReqs.length
-      ? pendingReqs.map(r => {
-          const isLogin = r.mode === 'login';
-          const exists = [...verifiedPseudos].some(p => norm(p) === norm(r.pseudo));
-          const modeBadge = `<span class="mod-mode ${isLogin ? 'login' : 'create'}">${escapeHtml(tr(isLogin ? 'trade.modModeLogin' : 'trade.modModeCreate'))}</span>`;
-          // hint the moderator whether the claimed pseudo already exists
-          let hint = '';
-          if (isLogin) hint = exists
-            ? `<span class="mod-hint ok">${escapeHtml(tr('trade.modPseudoExists'))}</span>`
-            : `<span class="mod-hint warn">${escapeHtml(tr('trade.modPseudoUnknown'))}</span>`;
-          else if (exists) hint = `<span class="mod-hint warn">${escapeHtml(tr('trade.modPseudoTaken'))}</span>`;
-          return `
-          <div class="mod-row">
-            <div class="mod-row-main">${modeBadge}<strong>${escapeHtml(r.pseudo||'?')}</strong>${hint}
-              <span class="mod-contact">${escapeHtml(r.contact||'')}</span>
-              <span class="mod-uid">${escapeHtml(r.id)}</span></div>
-            <div class="mod-row-act">
-              <button class="mod-ok" type="button" data-req-ok="${escapeHtml(r.id)}">${escapeHtml(tr('trade.modApprove'))}</button>
-              <button class="mod-no" type="button" data-req-no="${escapeHtml(r.id)}">${escapeHtml(tr('trade.modReject'))}</button>
-            </div>
-          </div>`;
-        }).join('')
-      : `<p class="trade-empty">${escapeHtml(tr('trade.modNoRequests'))}</p>`;
-    const mods = modList.map(m => {
-      const pseudo = verifiedByUid[m.id];
-      const you = m.id === uid ? ' ' + escapeHtml(tr('trade.modYou')) : '';
-      const main = pseudo
-        ? `<strong>${escapeHtml(pseudo)}</strong>${you}<span class="mod-uid">${escapeHtml(m.id)}</span>`
-        : `<span class="mod-uid">${escapeHtml(m.id)}${you}</span>`;
-      return `
-      <div class="mod-row">
-        <div class="mod-row-main">${main}</div>
-        <div class="mod-row-act">
-          <button class="mod-no" type="button" data-mod-rm="${escapeHtml(m.id)}">${escapeHtml(tr('trade.modRemove'))}</button>
-        </div>
-      </div>`;
-    }).join('');
-    const banned = bannedList.length
-      ? bannedList.map(b => {
-          const main = b.pseudo
-            ? `<strong>${escapeHtml(b.pseudo)}</strong><span class="mod-uid">${escapeHtml(b.id)}</span>`
-            : `<span class="mod-uid">${escapeHtml(b.id)}</span>`;
-          return `
-          <div class="mod-row">
-            <div class="mod-row-main">${main}</div>
-            <div class="mod-row-act">
-              <button class="mod-ok" type="button" data-ban-rm="${escapeHtml(b.id)}">${escapeHtml(tr('trade.modUnban'))}</button>
-            </div>
-          </div>`;
-        }).join('')
-      : `<p class="trade-empty">${escapeHtml(tr('trade.modNoBans'))}</p>`;
-    // Managing moderators (add/remove) is OWNER-only, so mods can't promote or
-    // remove each other. Any moderator can ban NORMAL users, but never another
-    // moderator or the owner (guarded in banByPseudo + the rules).
-    const ownerTools = !isOwner ? '' : `
-        <div class="mod-section-title">${escapeHtml(tr('trade.modMods'))}</div>
-        <div class="mod-list">${mods}</div>
-        <div class="trade-row">
-          <input id="t-mod-add" class="trade-input" type="text" maxlength="128" placeholder="${escapeHtml(tr('trade.modAddId'))}" autocomplete="off">
-          <button id="t-mod-add-btn" class="trade-publish" type="button">${escapeHtml(tr('trade.modAdd'))}</button>
-        </div>
-        <div id="t-mod-status" class="trade-status"></div>`;
-    const banTools = `
-        <div class="mod-section-title">${escapeHtml(tr('trade.modBanned'))}</div>
-        <div class="mod-list">${banned}</div>
-        <div class="trade-row">
-          <input id="t-mod-ban" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.modBanId'))}" autocomplete="off">
-          <button id="t-mod-ban-btn" class="trade-del" type="button">${escapeHtml(tr('trade.modBan'))}</button>
-        </div>
-        <div id="t-ban-status" class="trade-status"></div>`;
-    el.innerHTML = `
-      <div class="mod-panel">
-        <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
-        <div class="mod-section-title">${escapeHtml(tr('trade.modRequests'))}</div>
-        <div class="mod-list">${reqs}</div>
-        ${ownerTools}
-        ${banTools}
-      </div>`;
-  }
-
   // ---- listings ----
   let listingsCache = [];
   function timeAgo(ts){
@@ -384,12 +290,12 @@
   function isExpired(d){ return !!(d.expireAt && d.expireAt.toDate && d.expireAt.toDate().getTime() <= Date.now()); }
   function renderListings(docs){
     // Self-cleanup: a seller removes their own expired listings on load (rules
-    // allow owner/seller delete). Belt-and-suspenders with the server-side TTL.
+    // allow owner/seller delete). Belt-and-suspenders with the moderator sweep.
     if (FB && (myPseudo || uid)){
       docs.filter(doc => isExpired(doc.data()) && isMine(doc.data()))
         .forEach(doc => FB.db.collection('listings').doc(doc.id).delete().catch(() => {}));
     }
-    // Hide expired listings for everyone right away, even before the TTL sweeps them.
+    // Hide expired listings for everyone right away, even before they're swept.
     docs = docs.filter(doc => !isExpired(doc.data()));
     listingsCache = docs;
     const mineDocs = docs.filter(doc => isMine(doc.data()));
@@ -432,13 +338,7 @@
       unsubMyReq = FB.db.collection('requests').doc(uid)
         .onSnapshot(doc => { myReq = doc.exists ? doc.data() : null; renderGate(); }, () => {});
       subscribeMyBanned();
-      // am I a moderator?
-      FB.db.collection('moderators').doc(uid).get().then(doc => {
-        isMod = doc.exists;
-        isOwner = doc.exists && !!(doc.data() && doc.data().owner === true);
-        if (isMod){ subscribeAdmin(); sweepExpiredListings(); }
-        renderAdmin();
-      }).catch(() => {});
+      if (CTX.checkModerator) CTX.checkModerator();
       renderGate();
     }).catch(() => { renderGate(); });
   }
@@ -455,29 +355,9 @@
         const mineDoc = snap.docs.find(d => d.id === uid);
         myPseudo = mineDoc ? (mineDoc.data().pseudo || null) : null;
         renderGate();
-        renderAdmin();
+        if (CTX.renderAdmin) CTX.renderAdmin();
         renderListingsFromCache();
       }, () => {});
-  }
-
-  // Moderator sweep: on every mod page load, delete ALL expired listings — even
-  // those of sellers who never return (rules allow mods to delete any listing).
-  // This is our free replacement for a server-side TTL policy (Blaze-only).
-  function sweepExpiredListings(){
-    if (!FB || !isMod) return;
-    FB.db.collection('listings').where('expireAt','<=', firebase.firestore.Timestamp.now()).get()
-      .then(snap => Promise.all(snap.docs.map(d => d.ref.delete())))
-      .catch(() => {});
-  }
-
-  function subscribeAdmin(){
-    if (unsubReqs) return;
-    unsubReqs = FB.db.collection('requests').orderBy('at','desc').limit(100)
-      .onSnapshot(snap => { pendingReqs = snap.docs.map(d => Object.assign({ id:d.id }, d.data())); renderAdmin(); }, () => {});
-    unsubMods = FB.db.collection('moderators')
-      .onSnapshot(snap => { modList = snap.docs.map(d => ({ id:d.id })); renderAdmin(); }, () => {});
-    unsubBanned = FB.db.collection('banned')
-      .onSnapshot(snap => { bannedList = snap.docs.map(d => Object.assign({ id:d.id }, d.data())); renderAdmin(); }, () => {});
   }
 
   // Watch my own ban doc so a banned visitor immediately sees the notice and
@@ -493,15 +373,7 @@
   // so the Modération tab can appear without first opening the Trade tab.
   function initMod(){
     if (!FB) return;
-    FB.ready.then(u => {
-      uid = u;
-      FB.db.collection('moderators').doc(uid).get().then(doc => {
-        isMod = doc.exists;
-        isOwner = doc.exists && !!(doc.data() && doc.data().owner === true);
-        if (isMod){ subscribeVerified(); subscribeAdmin(); sweepExpiredListings(); }
-        renderAdmin();
-      }).catch(() => {});
-    }).catch(() => {});
+    FB.ready.then(u => { uid = u; if (CTX.checkModerator) CTX.checkModerator(); }).catch(() => {});
   }
 
   // ---- actions ----
@@ -524,71 +396,6 @@
     authMode = null; // back to the create/login choice
     FB.db.collection('requests').doc(uid).delete().catch(() => {});
   }
-
-  function approveReq(id){
-    const r = pendingReqs.find(x => x.id === id);
-    if (!r) return;
-    FB.db.collection('verified').doc(id).set({
-      pseudo: r.pseudo, by: uid, at: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => FB.db.collection('requests').doc(id).delete())
-      .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
-  }
-  function rejectReq(id){ FB.db.collection('requests').doc(id).delete().catch(() => {}); }
-
-  function addModerator(){
-    if (!isOwner) return;
-    const val = (byId('t-mod-add').value || '').trim();
-    if (!val) return;
-    // Promote by PSEUDO, not uid (nobody knows their own uid). A pseudo can map
-    // to several uids (same person, several PCs) → make every one of them a mod.
-    const key = norm(val);
-    const uids = Object.keys(verifiedByUid).filter(u => norm(verifiedByUid[u]) === key);
-    if (!uids.length){ modStatus(tr('trade.modErrNotVerified')); return; }
-    Promise.all(uids.map(u => FB.db.collection('moderators').doc(u).set({
-      by: uid, at: firebase.firestore.FieldValue.serverTimestamp()
-    }))).then(() => { const i = byId('t-mod-add'); if (i) i.value = ''; })
-      .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
-  }
-  function removeModerator(id){ if (!isOwner) return; FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }
-  function modStatus(msg){ const el = byId('t-mod-status'); if (el){ el.textContent = msg; el.className = 'trade-status err'; } }
-  function banStatus(msg, ok){ const el = byId('t-ban-status'); if (el){ el.textContent = msg; el.className = 'trade-status' + (ok ? ' ok' : msg ? ' err' : ''); } }
-
-  // Ban a PSEUDO → bans every uid that maps to it. A pseudo can span several PCs
-  // (each its own uid); we collect them from the verified map and from any pending
-  // request under that pseudo. A ban only BLOCKS the accounts and removes what they
-  // sell — we KEEP their verification so that unbanning fully restores them without
-  // re-registration. Mod rights are the one thing we strip, so a banned moderator
-  // can't lift their own ban.
-  function banByPseudo(){
-    if (!isMod) return;
-    const input = byId('t-mod-ban');
-    const val = (input && input.value || '').trim();
-    if (!val) return;
-    const key = norm(val);
-    const uids = new Set();
-    Object.keys(verifiedByUid).forEach(u => { if (norm(verifiedByUid[u]) === key) uids.add(u); });
-    pendingReqs.forEach(r => { if (norm(r.pseudo) === key) uids.add(r.id); });
-    if (!uids.size){ banStatus(tr('trade.modErrNotVerified')); return; }
-    // A moderator can't ban another moderator (or the owner). If any of the
-    // pseudo's uids is a mod, refuse the whole ban. (Rules enforce this too.)
-    const modIds = new Set(modList.map(m => m.id));
-    if ([...uids].some(u => modIds.has(u))){ banStatus(tr('trade.modErrBanMod')); return; }
-    if (!confirm(tr('trade.confirmBan'))) return;
-    const stamp = () => ({ pseudo: val.slice(0,32), by: uid, at: firebase.firestore.FieldValue.serverTimestamp() });
-    const ops = [];
-    uids.forEach(u => {
-      ops.push(FB.db.collection('banned').doc(u).set(stamp()));
-      ops.push(FB.db.collection('moderators').doc(u).delete().catch(() => {}));
-    });
-    // remove only what they sell — their listings (managed by pseudo)
-    ops.push(FB.db.collection('listings').where('seller','==', val).get()
-      .then(snap => Promise.all(snap.docs.map(d => d.ref.delete())))
-      .catch(() => {}));
-    Promise.all(ops)
-      .then(() => { if (input) input.value = ''; banStatus(tr('trade.modBanDone') + ' (' + uids.size + ')', true); })
-      .catch(err => banStatus((err && err.message) || tr('trade.errAuth')));
-  }
-  function unban(id){ if (!isMod) return; FB.db.collection('banned').doc(id).delete().catch(err => banStatus((err && err.message) || tr('trade.errAuth'))); }
 
   function publish(){
     if (!FB){ status(tr('trade.offline'), false); return; }
@@ -691,16 +498,19 @@
     if (t.id === 't-item-mat'){ draft.item.material = t.value; return; }
   });
 
-  // ---- moderator admin actions (panel lives in the "mod" tab) ----
-  if (modView) modView.addEventListener('click', (ev) => {
-    const t = ev.target;
-    if (t.closest('#t-mod-add-btn')){ addModerator(); return; }
-    if (t.closest('#t-mod-ban-btn')){ banByPseudo(); return; }
-    const rok = t.closest('[data-req-ok]'); if (rok){ approveReq(rok.getAttribute('data-req-ok')); return; }
-    const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
-    const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }
-    const brm = t.closest('[data-ban-rm]'); if (brm){ if (confirm(tr('trade.confirmUnban'))) unban(brm.getAttribute('data-ban-rm')); return; }
-  });
+  // ---- shared context for trade-mod.js (loaded AFTER this file) ----
+  // The mod panel reads live state + helpers from here; it registers its own
+  // renderAdmin / checkModerator back onto CTX, which we call (guarded) wherever
+  // the trade side needs the mod panel refreshed (build, language change, verified
+  // snapshot). verifiedByUid / verifiedPseudos are shared by reference (mutated in
+  // place, never reassigned), so the mod side always sees live data.
+  const CTX = window.__TRADE__ = {
+    FB: FB, tr: tr, escapeHtml: escapeHtml, norm: norm, byId: byId,
+    getUid: function(){ return uid; },
+    verifiedByUid: verifiedByUid,
+    verifiedPseudos: verifiedPseudos,
+    subscribeVerified: subscribeVerified
+  };
 
   // ---- lazy connect when the trade tab is shown ----
   document.addEventListener('tabchange', (ev) => { if (ev.detail === 'trade') connect(); });

@@ -21,6 +21,13 @@ sert le dossier. Pas d'étape de compilation.
   - `i18n/index.js` : assemble `window.__I18N__` ; **se charge après** les langues.
   - `codex.js` : logique onglet Codex (recherche, cartes, thème, guide, langue).
   - `build.js` : logique onglet Équipement (sets multiples, slots, liste d'achat).
+  - `firebase-init.js` : init Firebase (compat SDK) + App Check ; expose
+    `window.__FB__`. `null` si le SDK CDN est bloqué.
+  - `trade.js` : onglet Marché (gate de vérification, formulaire de vente,
+    annonces, expiration). Expose `window.__TRADE__` (état + helpers partagés).
+  - `trade-mod.js` : onglet Modération (rendu du panneau, abonnements admin,
+    actions valider/rejeter, ban/déban, gestion des modos owner-only). Lit et
+    complète `window.__TRADE__` ; **se charge après** `trade.js`.
 - `csv/` : sources brutes (`prices`, `aliases`, `explanations`) ayant servi à
   produire `data.js`.
 - `README.md` : doc utilisateur de la structure.
@@ -45,8 +52,12 @@ sert le dossier. Pas d'étape de compilation.
 
 ## Ordre de chargement (à préserver)
 
-- CSS : `base → chrome → codex → build → responsive`.
-- JS : `data → i18n/{langues} → i18n/index → codex → build`.
+- CSS : `base → chrome → codex → build → trade → responsive`.
+- JS : `data → i18n/{langues} → i18n/index → codex → build → firebase-init →
+  trade → trade-mod`. `trade-mod.js` **doit** venir après `trade.js` : il
+  consomme `window.__TRADE__` que `trade.js` met en place (helpers, état partagé
+  `verifiedByUid`/`verifiedPseudos` par référence, `getUid`), et y enregistre en
+  retour `renderAdmin` / `checkModerator` que `trade.js` appelle de façon gardée.
 
 ## Pas de tests / lint / CI
 

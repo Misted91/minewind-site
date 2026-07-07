@@ -49,6 +49,21 @@
   const LISTING_TTL_DAYS = 14;
   const LISTING_TTL_MS = LISTING_TTL_DAYS * 24 * 60 * 60 * 1000;
 
+  // Structured price: an amount + a currency unit (see the beginner guide —
+  // 1s = 64 dragon eggs, 1sh = 1 shulker = 1728). Legacy listings only carry
+  // the free-text `price` field; formatPrice/priceEggs handle both.
+  const PRICE_UNITS = ['d','s','sh'];
+  const UNIT_EGGS = { d:1, s:64, sh:1728 };
+  function formatPrice(d){
+    if (d && d.priceAmount != null && UNIT_EGGS[d.priceUnit]) return d.priceAmount + d.priceUnit;
+    return (d && d.price) || '';
+  }
+  // Comparable value in dragon eggs, or null for legacy free-text prices.
+  function priceEggs(d){
+    if (d && d.priceAmount != null && UNIT_EGGS[d.priceUnit]) return d.priceAmount * UNIT_EGGS[d.priceUnit];
+    return null;
+  }
+
   // ---- DOM ----
   const tradeView = document.getElementById('trade-view');
   if (!tradeView) return;
@@ -56,7 +71,7 @@
   const byId = (id) => document.getElementById(id);
 
   // ---- draft state for the form ----
-  const draft = { kind:'essence', item:{ piece:'chestplate', material:'Netherite', toolType:'sword', essences:[], soul:null } };
+  const draft = { kind:'essence', priceUnit:'s', item:{ piece:'chestplate', material:'Netherite', toolType:'sword', essences:[], soul:null } };
   let uid = null, connected = false, staticBuilt = false;
   let tradeTab = 'mine'; // which sub-tab is shown: 'mine' | 'others'
   // verification state
@@ -131,7 +146,10 @@
         <span>${escapeHtml(tr('trade.sellingAs'))} <strong>${escapeHtml(myPseudo)}</strong></span>
       </div>
       <div class="trade-form" id="trade-form">
-        <input id="t-price" class="trade-input" type="text" maxlength="40" placeholder="${escapeHtml(tr('trade.price'))}" autocomplete="off">
+        <div class="trade-row trade-price-row">
+          <input id="t-price" class="trade-input" type="number" min="0" step="any" inputmode="decimal" placeholder="${escapeHtml(tr('trade.priceAmount'))}" autocomplete="off">
+          <select id="t-price-unit" class="trade-select" title="${escapeHtml(tr('trade.priceUnit'))}">${PRICE_UNITS.map(u=>`<option value="${u}"${u===draft.priceUnit?' selected':''}>${u}</option>`).join('')}</select>
+        </div>
         <div class="trade-kind" id="trade-kind">
           <button class="kind-btn${draft.kind==='essence'?' active':''}" type="button" data-kind="essence">${escapeHtml(tr('trade.kindEssence'))}</button>
           <button class="kind-btn${draft.kind==='item'?' active':''}" type="button" data-kind="item">${escapeHtml(tr('trade.kindItem'))}</button>
@@ -236,6 +254,7 @@
 
   // ---- listings ----
   let listingsCache = [];
+  let listingsLoaded = false; // first snapshot received
   function timeAgo(ts){
     if (!ts || !ts.toDate) return '';
     try { return ts.toDate().toLocaleDateString(lang, { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
@@ -276,7 +295,7 @@
       ? `<span class="verify-badge sm" title="${escapeHtml(tr('trade.badgeVerified'))}">✓</span>` : '';
     return `<div class="listing">
       <div class="listing-main">
-        <div class="listing-top"><span class="listing-seller">${badge}${escapeHtml(d.seller||'?')}</span><span class="listing-price">${escapeHtml(d.price||'')}</span></div>
+        <div class="listing-top"><span class="listing-seller">${badge}${escapeHtml(d.seller||'?')}</span><span class="listing-price">${escapeHtml(formatPrice(d))}</span></div>
         ${whatMarkup(d)}
         ${d.note ? `<div class="listing-note">${escapeHtml(d.note)}</div>` : ''}
       </div>
@@ -298,6 +317,9 @@
     // Hide expired listings for everyone right away, even before they're swept.
     docs = docs.filter(doc => !isExpired(doc.data()));
     listingsCache = docs;
+    listingsLoaded = true;
+    // let the Équipement tab refresh its market offers section
+    document.dispatchEvent(new CustomEvent('tradelistings'));
     const mineDocs = docs.filter(doc => isMine(doc.data()));
     const otherDocs = docs.filter(doc => !isMine(doc.data()));
 
@@ -328,9 +350,7 @@
     if (connected) return;
     if (!FB){ renderGate(); return; }
     connected = true;
-    // public listings (readable by anyone)
-    unsubListings = FB.db.collection('listings').orderBy('createdAt','desc').limit(100)
-      .onSnapshot(snap => renderListings(snap.docs), () => {});
+    subscribeListings();
     subscribeVerified();
     FB.ready.then(u => {
       uid = u;
@@ -341,6 +361,15 @@
       if (CTX.checkModerator) CTX.checkModerator();
       renderGate();
     }).catch(() => { renderGate(); });
+  }
+
+  // public listings (readable by anyone). Extracted from connect() so the
+  // Équipement tab can lazily subscribe (market offers on the shopping list)
+  // without opening the Trade tab.
+  function subscribeListings(){
+    if (unsubListings || !FB) return;
+    unsubListings = FB.db.collection('listings').orderBy('createdAt','desc').limit(100)
+      .onSnapshot(snap => renderListings(snap.docs), () => {});
   }
 
   // verified pseudos (readable by anyone) — used for seller badges, the sell
@@ -402,11 +431,13 @@
     if (!uid){ status(tr('trade.errAuth'), false); return; }
     if (iAmBanned){ status(tr('trade.banned'), false); return; }
     if (!myPseudo){ status(tr('trade.errNotVerified'), false); return; }
-    const price = (byId('t-price').value || '').trim().slice(0,40);
+    const amount = parseFloat(byId('t-price').value);
+    const unit = draft.priceUnit;
     const note = (byId('t-note').value || '').trim().slice(0,120);
-    if (!price){ status(tr('trade.errFields'), false); return; }
+    if (!(amount > 0) || !UNIT_EGGS[unit]){ status(tr('trade.errFields'), false); return; }
 
-    const doc = { seller: myPseudo, price, kind: draft.kind, owner: uid,
+    // `price` keeps a display string so older clients / the mod panel still work.
+    const doc = { seller: myPseudo, price: amount + unit, priceAmount: amount, priceUnit: unit, kind: draft.kind, owner: uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       expireAt: firebase.firestore.Timestamp.fromMillis(Date.now() + LISTING_TTL_MS) };
     if (note) doc.note = note;
@@ -492,6 +523,7 @@
     }
     const il = t.closest('[data-item-lvl]');
     if (il){ draft.item.essences[+il.getAttribute('data-item-lvl')].level = +t.value; return; }
+    if (t.id === 't-price-unit'){ draft.priceUnit = t.value; return; }
     if (t.id === 't-soul-count'){ if (draft.item.soul) draft.item.soul.count = +t.value; return; }
     if (t.id === 't-item-piece'){ draft.item.piece = t.value; renderKindBody(); return; }
     if (t.id === 't-item-tool'){ draft.item.toolType = t.value; return; }
@@ -509,7 +541,14 @@
     getUid: function(){ return uid; },
     verifiedByUid: verifiedByUid,
     verifiedPseudos: verifiedPseudos,
-    subscribeVerified: subscribeVerified
+    subscribeVerified: subscribeVerified,
+    // market-offers API for build.js (loaded BEFORE this file, but it only
+    // reads __TRADE__ lazily at render time)
+    ensureListings: subscribeListings,
+    listingsLoaded: function(){ return listingsLoaded; },
+    getListings: function(){ return listingsCache; },
+    formatPrice: formatPrice,
+    priceEggs: priceEggs
   };
 
   // ---- lazy connect when the trade tab is shown ----

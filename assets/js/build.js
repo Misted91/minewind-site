@@ -411,6 +411,63 @@
     </div>`;
   }
 
+  // ---- market offers for the missing essences of the active set ----
+  // Cross-references the unowned essences of the shopping list with the live
+  // Trade listings (window.__TRADE__, set up by trade.js which loads after this
+  // file — only read lazily at render time). Cheapest offer first; legacy
+  // free-text prices can't be compared so they sort last.
+  function marketMarkup(items){
+    const T = window.__TRADE__;
+    if (!T || !T.FB) return '';
+    // one line per distinct missing essence+tier (the same essence on two
+    // slots is still one market search)
+    const missing = [];
+    const seen = new Set();
+    items.filter(i => !i.owned).forEach(it => {
+      const id = norm(it.name) + '|' + it.level;
+      if (seen.has(id)) return;
+      seen.add(id);
+      missing.push(it);
+    });
+    if (!missing.length) return '';
+    T.ensureListings();
+    if (!T.listingsLoaded()){
+      return `<div class="market"><div class="market-head"><h4>${escapeHtml(tr('build.market'))}</h4></div>
+        <p class="market-empty">${escapeHtml(tr('build.marketLoading'))}</p></div>`;
+    }
+    const listings = T.getListings().map(doc => doc.data()).filter(d => d.kind === 'essence');
+    let total = 0, totalKnown = 0;
+    const rows = missing.map(it => {
+      const offers = listings.filter(d => norm(d.essence || '') === norm(it.name) && (d.level || 1) === it.level);
+      offers.sort((a, b) => {
+        const ea = T.priceEggs(a), eb = T.priceEggs(b);
+        if (ea == null && eb == null) return 0;
+        if (ea == null) return 1;
+        if (eb == null) return -1;
+        return ea - eb;
+      });
+      const best = offers[0];
+      const eggs = best ? T.priceEggs(best) : null;
+      if (eggs != null){ total += eggs; totalKnown++; }
+      const offer = best
+        ? `<span class="market-price">${escapeHtml(T.formatPrice(best))}</span>
+           <span class="market-seller">${escapeHtml(best.seller || '?')}${offers.length > 1 ? ` <span class="market-more">+${offers.length - 1}</span>` : ''}</span>`
+        : `<span class="market-none">${escapeHtml(tr('build.marketNone'))}</span>`;
+      return `<div class="market-row${best ? '' : ' none'}">
+        <span class="buy-name">${escapeHtml(it.name)}</span>
+        <span class="buy-lvl">${ROMAN[it.level-1]}</span>
+        ${offer}
+      </div>`;
+    }).join('');
+    const totalLabel = totalKnown
+      ? `<span class="stat-cost" title="${escapeHtml(tr('build.marketTotal'))}">≈ ${Math.round(total / 64 * 10) / 10}s${totalKnown < missing.length ? ' +' : ''}</span>`
+      : '';
+    return `<div class="market">
+      <div class="market-head"><h4>${escapeHtml(tr('build.market'))}</h4>${totalLabel}</div>
+      <div class="market-list">${rows}</div>
+    </div>`;
+  }
+
   function shoppingMarkup(){
     const items = [];
     SLOTS.forEach(key => {
@@ -465,6 +522,7 @@
         </div>
       </div>
       <div class="buy-list">${rows}</div>
+      ${marketMarkup(items)}
     </div>`;
   }
 
@@ -664,6 +722,16 @@
   const imported = importFromHash();
   const savedTab = localStorage.getItem(TAB_KEY);
   setTab(imported ? 'build' : (savedTab === 'build' || savedTab === 'trade') ? savedTab : 'codex');
+
+  // refresh the market offers section when trade listings arrive/change
+  // (skip while the user is typing in the set-name field: a re-render would
+  // steal the focus)
+  document.addEventListener('tradelistings', () => {
+    if (!built || buildView.hidden) return;
+    const focused = document.activeElement;
+    if (focused && (focused.id === 'set-name' || focused.classList.contains('ess-input'))) return;
+    renderBuild();
+  });
 
   // ---- keep in sync with language switches from app.js ----
   document.addEventListener('codexlang', (ev) => {

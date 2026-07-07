@@ -42,6 +42,12 @@
   cursor:pointer;
 }
 
+/* price = amount input + small currency-unit select (d / s / sh) */
+.trade-price-row .trade-select{ flex:0 0 96px; font-size:13px; }
+.trade-price-row .trade-input{ -moz-appearance:textfield; }
+.trade-price-row .trade-input::-webkit-outer-spin-button,
+.trade-price-row .trade-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
 .trade-field{ display:flex; flex-direction:column; gap:4px; }
 .trade-field .trade-sub{ margin:0; }
 .trade-field .trade-select{ width:100%; }

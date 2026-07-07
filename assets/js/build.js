@@ -468,6 +468,16 @@
     </div>`;
   }
 
+  // Is this essence+tier in the in-game inventory (Inventaire tab)? Read from
+  // localStorage at render time — inventory.js dispatches 'invchange' on save.
+  function invHas(name, level){
+    try {
+      const p = JSON.parse(localStorage.getItem('minewind-inventory'));
+      return !!(p && Array.isArray(p.items) &&
+        p.items.some(it => it && norm(it.name) === norm(name) && (it.level || 1) === level && (it.qty || 1) > 0));
+    } catch(e){ return false; }
+  }
+
   function shoppingMarkup(){
     const items = [];
     SLOTS.forEach(key => {
@@ -506,7 +516,7 @@
     const rows = items.map(it => `
       <label class="buy-row${it.owned?' done':''}">
         <input type="checkbox" class="own-check" data-slot="${it.slot}" data-idx="${it.idx}"${it.owned?' checked':''}>
-        <span class="buy-name">${escapeHtml(it.name)}</span>
+        <span class="buy-name">${escapeHtml(it.name)}${!it.owned && invHas(it.name, it.level) ? ` <span class="buy-inv" title="${escapeHtml(tr('build.inInventory'))}">✓ ${escapeHtml(tr('build.inInventory'))}</span>` : ''}</span>
         <span class="buy-slot">${escapeHtml(tr('build.slots.' + it.slot))}</span>
         <span class="buy-lvl">${ROMAN[it.level-1]}</span>
         <span class="buy-price">${escapeHtml(priceText(it.raw))}</span>
@@ -704,12 +714,14 @@
   const TAB_KEY = 'minewind-tab';
   const tradeView = document.getElementById('trade-view');
   const modView = document.getElementById('mod-view');
+  const invView = document.getElementById('inv-view');
   let built = false;
   function setTab(tab){
     codexView.hidden = tab !== 'codex';
     buildView.hidden = tab !== 'build';
     if (tradeView) tradeView.hidden = tab !== 'trade';
     if (modView) modView.hidden = tab !== 'mod';
+    if (invView) invView.hidden = tab !== 'inv';
     tabs.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
     localStorage.setItem(TAB_KEY, tab);
     if (tab === 'build' && !built){ built = true; renderBuild(); }
@@ -721,7 +733,12 @@
   });
   const imported = importFromHash();
   const savedTab = localStorage.getItem(TAB_KEY);
-  setTab(imported ? 'build' : (savedTab === 'build' || savedTab === 'trade') ? savedTab : 'codex');
+  setTab(imported ? 'build' : (savedTab === 'build' || savedTab === 'trade' || savedTab === 'inv') ? savedTab : 'codex');
+
+  // refresh the "in your inventory" badges when the Inventaire tab changes
+  document.addEventListener('invchange', () => {
+    if (built && !buildView.hidden) renderBuild();
+  });
 
   // refresh the market offers section when trade listings arrive/change
   // (skip while the user is typing in the set-name field: a re-render would

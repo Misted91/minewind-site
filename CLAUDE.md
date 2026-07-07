@@ -13,6 +13,7 @@ sert le dossier. Pas d'étape de compilation.
   - `chrome.css` : bouton thème, sélecteur de langue, hero, onglets, footer
   - `codex.css` : onglet Codex (recherche, légende, boutons aléatoires, cartes)
   - `build.css` : onglet Équipement (sets, slots, âmes, liste d'achat)
+  - `inventory.css` : onglet Inventaire (essences possédées en jeu)
   - `responsive.css` : media queries + reduced-motion — **chargé en dernier**
 - `assets/js/`
   - `data.js` : données des essences. **Généré** — ne pas éditer à la main.
@@ -21,6 +22,10 @@ sert le dossier. Pas d'étape de compilation.
   - `i18n/index.js` : assemble `window.__I18N__` ; **se charge après** les langues.
   - `codex.js` : logique onglet Codex (recherche, cartes, thème, guide, langue).
   - `build.js` : logique onglet Équipement (sets multiples, slots, liste d'achat).
+    Gère aussi la barre d'onglets globale (Codex/Équipement/Inventaire/Trade/Mod).
+  - `inventory.js` : onglet Inventaire (essences possédées en jeu, quantités,
+    valeur estimée). Persiste `minewind-inventory` et émet `invchange`, que
+    `build.js` écoute pour le badge « dans ton inventaire » de la liste d'achat.
   - `firebase-init.js` : init Firebase (compat SDK) + App Check ; expose
     `window.__FB__`. `null` si le SDK CDN est bloqué.
   - `trade.js` : onglet Marché (gate de vérification, formulaire de vente,
@@ -47,14 +52,14 @@ sert le dossier. Pas d'étape de compilation.
   suffixe (dans `index.html`) à chaque modif d'un fichier pour forcer le
   rechargement navigateur.
 - **Persistance** : `localStorage` (`minewind-theme`, `minewind-lang`,
-  `minewind-tab`, `minewind-builds`). `build.js` migre l'ancien format
+  `minewind-tab`, `minewind-builds`, `minewind-inventory`). `build.js` migre l'ancien format
   `minewind-build` → `minewind-builds`.
 
 ## Ordre de chargement (à préserver)
 
-- CSS : `base → chrome → codex → build → trade → responsive`.
-- JS : `data → i18n/{langues} → i18n/index → codex → build → firebase-init →
-  trade → trade-mod`. `trade-mod.js` **doit** venir après `trade.js` : il
+- CSS : `base → chrome → codex → build → trade → inventory → responsive`.
+- JS : `data → i18n/{langues} → i18n/index → codex → build → inventory →
+  firebase-init → trade → trade-mod`. `trade-mod.js` **doit** venir après `trade.js` : il
   consomme `window.__TRADE__` que `trade.js` met en place (helpers, état partagé
   `verifiedByUid`/`verifiedPseudos` par référence, `getUid`), et y enregistre en
   retour `renderAdmin` / `checkModerator` que `trade.js` appelle de façon gardée.

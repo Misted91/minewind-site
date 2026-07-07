@@ -64,6 +64,7 @@ window.__I18N_STRINGS__.de = {
     marketNone: 'Kein Angebot',
     marketLoading: 'Marktangebote werden geladen…',
     marketTotal: 'Summe der besten Angebote (ungefähr, in Stacks)',
+    inInventory: 'In deinem Inventar',
     setEffect: 'Set-Effekt (über die ganze Ausrüstung gestapelt)',
     setName: 'Set-Name',
     deleteSet: 'Löschen',
@@ -85,6 +86,17 @@ window.__I18N_STRINGS__.de = {
     resetConfirm: 'Gesamte Ausrüstung zurücksetzen? Das kann nicht rückgängig gemacht werden.',
     level: 'Stufe',
     slots: { helmet: 'Helm / Kopf', chestplate: 'Brustpanzer', leggings: 'Beinschutz', boots: 'Stiefel', offhand: 'Nebenhand' }
+  },
+  inv: {
+    tab: 'Inventar',
+    heading: 'Mein Inventar',
+    intro: 'Erfasse die Essenzen, die du im Spiel besitzt. Wird automatisch auf diesem Gerät gespeichert.',
+    searchEssence: 'Essenz hinzufügen…',
+    add: 'Hinzufügen',
+    empty: 'Noch keine Essenzen. Füge die hinzu, die du im Spiel besitzt.',
+    count: 'Essenzen',
+    estValue: 'Geschätzter Wert (ungefähr, in Stacks)',
+    remove: 'Entfernen'
   },
   trade: {
     tab: 'Trade',

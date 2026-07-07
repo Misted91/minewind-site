@@ -64,6 +64,7 @@ window.__I18N_STRINGS__.it = {
     marketNone: 'Nessuna offerta',
     marketLoading: 'Caricamento delle offerte del mercato…',
     marketTotal: 'Totale delle migliori offerte (approssimativo, in stack)',
+    inInventory: 'Nel tuo inventario',
     setEffect: "Effetto del set (cumulato sull'intero equipaggiamento)",
     setName: 'Nome del set',
     deleteSet: 'Elimina',
@@ -85,6 +86,17 @@ window.__I18N_STRINGS__.it = {
     resetConfirm: "Reimpostare tutto l'equipaggiamento? L'azione è irreversibile.",
     level: 'Liv.',
     slots: { helmet: 'Elmo / Testa', chestplate: 'Corazza', leggings: 'Gambali', boots: 'Stivali', offhand: 'Mano secondaria' }
+  },
+  inv: {
+    tab: 'Inventario',
+    heading: 'Il mio inventario',
+    intro: 'Registra le essenze che possiedi in gioco. Salvato automaticamente su questo dispositivo.',
+    searchEssence: "Aggiungi un'essenza…",
+    add: 'Aggiungi',
+    empty: 'Nessuna essenza per ora. Aggiungi quelle che possiedi in gioco.',
+    count: 'essenze',
+    estValue: 'Valore stimato (approssimativo, in stack)',
+    remove: 'Rimuovi'
   },
   trade: {
     tab: 'Trade',

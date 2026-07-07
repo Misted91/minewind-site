@@ -14,6 +14,8 @@ minewind-site/
 │  │  ├─ chrome.css          bouton thème, sélecteur de langue, hero, onglets, footer
 │  │  ├─ codex.css           onglet Codex : recherche, légende, boutons aléatoires, cartes
 │  │  ├─ build.css           onglet Équipement : sets, slots, âmes, liste d'achat
+│  │  ├─ trade.css           onglet Trade : formulaire de vente, annonces, modération
+│  │  ├─ inventory.css       onglet Inventaire : essences possédées en jeu
 │  │  └─ responsive.css      media queries + préférences de mouvement (chargé en dernier)
 │  └─ js/
 │     ├─ data.js            données des essences (généré — ne pas éditer à la main)
@@ -21,7 +23,11 @@ minewind-site/
 │     │  ├─ fr.js · en.js · de.js · es.js · it.js   alimentent window.__I18N_STRINGS__
 │     │  └─ index.js        assemble window.__I18N__ (à charger après les langues)
 │     ├─ codex.js           logique de l'onglet Codex (recherche, cartes, thème, guide)
-│     └─ build.js           logique de l'onglet Équipement (sets, slots, liste d'achat)
+│     ├─ build.js           logique de l'onglet Équipement (sets, slots, liste d'achat)
+│     ├─ inventory.js       onglet Inventaire : essences possédées en jeu (localStorage)
+│     ├─ firebase-init.js   init Firebase + App Check (expose window.__FB__)
+│     ├─ trade.js           onglet Trade : vérification, formulaire de vente, annonces
+│     └─ trade-mod.js       onglet Modération (à charger après trade.js)
 └─ csv/                     sources brutes (prix, alias, descriptions) ayant servi à data.js
 ```
 
@@ -30,8 +36,9 @@ minewind-site/
 Les fichiers sont de simples `<script>`/`<link>` (pas d'ES modules, pour
 fonctionner aussi en `file://`). L'ordre dans `index.html` compte :
 
-- **CSS** : `base → chrome → codex → build → responsive` (cascade).
-- **JS** : `data` puis les langues `i18n/*` puis `i18n/index` puis `codex` et `build`.
+- **CSS** : `base → chrome → codex → build → trade → inventory → responsive` (cascade).
+- **JS** : `data` puis les langues `i18n/*` puis `i18n/index` puis `codex`, `build`,
+  `inventory`, puis `firebase-init`, `trade` et `trade-mod`.
 
 ## Cache busting
 

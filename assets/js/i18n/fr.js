@@ -64,6 +64,7 @@ window.__I18N_STRINGS__.fr = {
     marketNone: 'Aucune offre',
     marketLoading: 'Chargement des offres du marché…',
     marketTotal: 'Total des meilleures offres (approximatif, en stacks)',
+    inInventory: 'Dans ton inventaire',
     setEffect: "Effet de set (cumulé sur l'ensemble)",
     setName: 'Nom du set',
     deleteSet: 'Supprimer',
@@ -85,6 +86,17 @@ window.__I18N_STRINGS__.fr = {
     resetConfirm: 'Réinitialiser tout ton équipement ? Cette action est irréversible.',
     level: 'Niv.',
     slots: { helmet: 'Casque / Tête', chestplate: 'Plastron', leggings: 'Jambières', boots: 'Bottes', offhand: 'Main secondaire' }
+  },
+  inv: {
+    tab: 'Inventaire',
+    heading: 'Mon inventaire',
+    intro: 'Recense les essences que tu possèdes en jeu. Sauvegardé automatiquement sur cet appareil.',
+    searchEssence: 'Ajouter une essence…',
+    add: 'Ajouter',
+    empty: "Aucune essence pour l'instant. Ajoute celles que tu possèdes en jeu.",
+    count: 'essences',
+    estValue: 'Valeur estimée (approximative, en stacks)',
+    remove: 'Retirer'
   },
   trade: {
     tab: 'Trade',

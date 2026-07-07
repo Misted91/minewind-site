@@ -64,6 +64,7 @@ window.__I18N_STRINGS__.es = {
     marketNone: 'Sin ofertas',
     marketLoading: 'Cargando ofertas del mercado…',
     marketTotal: 'Total de las mejores ofertas (aproximado, en stacks)',
+    inInventory: 'En tu inventario',
     setEffect: 'Efecto de conjunto (acumulado en todo el equipo)',
     setName: 'Nombre del set',
     deleteSet: 'Eliminar',
@@ -85,6 +86,17 @@ window.__I18N_STRINGS__.es = {
     resetConfirm: '¿Reiniciar todo tu equipo? Esta acción no se puede deshacer.',
     level: 'Nv.',
     slots: { helmet: 'Casco / Cabeza', chestplate: 'Peto', leggings: 'Grebas', boots: 'Botas', offhand: 'Mano secundaria' }
+  },
+  inv: {
+    tab: 'Inventario',
+    heading: 'Mi inventario',
+    intro: 'Registra las esencias que posees en el juego. Se guarda automáticamente en este dispositivo.',
+    searchEssence: 'Añadir una esencia…',
+    add: 'Añadir',
+    empty: 'Aún no hay esencias. Añade las que posees en el juego.',
+    count: 'esencias',
+    estValue: 'Valor estimado (aproximado, en stacks)',
+    remove: 'Quitar'
   },
   trade: {
     tab: 'Trade',

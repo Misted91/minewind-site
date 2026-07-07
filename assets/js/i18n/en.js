@@ -64,6 +64,7 @@ window.__I18N_STRINGS__.en = {
     marketNone: 'No offer',
     marketLoading: 'Loading market offers…',
     marketTotal: 'Best offers total (approximate, in stacks)',
+    inInventory: 'In your inventory',
     setEffect: 'Set effect (stacked across the loadout)',
     setName: 'Set name',
     deleteSet: 'Delete',
@@ -85,6 +86,17 @@ window.__I18N_STRINGS__.en = {
     resetConfirm: 'Reset your entire loadout? This cannot be undone.',
     level: 'Lvl',
     slots: { helmet: 'Helmet / Head', chestplate: 'Chestplate', leggings: 'Leggings', boots: 'Boots', offhand: 'Offhand' }
+  },
+  inv: {
+    tab: 'Inventory',
+    heading: 'My inventory',
+    intro: 'Track the essences you own in game. Saved automatically on this device.',
+    searchEssence: 'Add an essence…',
+    add: 'Add',
+    empty: 'No essences yet. Add the ones you own in game.',
+    count: 'essences',
+    estValue: 'Estimated value (approximate, in stacks)',
+    remove: 'Remove'
   },
   trade: {
     tab: 'Trade',

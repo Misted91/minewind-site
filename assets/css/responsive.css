@@ -73,6 +73,27 @@
   .build-head-actions .build-reset{ flex:1; text-align:center; }
 }
 
+/* ---------- Essence picker menu (esspicker.js) ---------- */
+@media (max-width: 600px){
+  .esspick-menu{ max-height: 50vh; }
+  .esspick-opt{ padding:11px 11px; }        /* bigger tap targets */
+  .esspick-name{ font-size:14px; }
+  .esspick-sec{ font-size:9.5px; max-width:34%; }
+}
+@media (max-width: 400px){
+  .esspick-sec{ display:none; }             /* avoid crowding on tiny screens */
+}
+
+/* ---------- Touch devices: no sticky hover-lift after a tap ---------- */
+@media (hover: none){
+  .essence-card:hover, .listing:hover, .legend-item:hover,
+  .random-btn:hover, .filter-chip:hover, .kind-btn:hover,
+  .set-tab:hover, .soul-opt:hover, .auth-opt:hover,
+  .theme-toggle:hover, .trade-publish:hover, .slot:hover{
+    transform:none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce){
   *{ transition:none !important; animation:none !important; }
 }

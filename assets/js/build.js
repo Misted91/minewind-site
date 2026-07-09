@@ -298,7 +298,6 @@
   // ---- DOM ----
   const buildView = document.getElementById('build-view');
   const buildInner = document.getElementById('build-inner');
-  const pickerList = document.getElementById('ess-picker-list');
   const codexView = document.getElementById('codex-view');
   const tabs = document.getElementById('tabs');
 
@@ -317,20 +316,18 @@
     const lv = levelsOf(name);
     return lv[lv.length - 1].lvl; // fall back to highest available tier
   }
-  // Essences a slot can still receive: category filter, single-distinct-spell rule, and a free tier left.
-  function allowedEssences(slot){
-    const cat = slotCat(slot, active().slots[slot]);
-    const spellNames = active().slots[slot].essences
-      .filter(en => isSpell(essByNorm[norm(en.name)])).map(en => norm(en.name));
-    return essences.filter(e =>
-      appliesTo(e, cat) &&
-      !(isSpell(e) && spellNames.length && !spellNames.includes(norm(e.name))) && // a different spell already there
-      freeLevel(slot, e.name) != null      // still has a tier not yet on this item
-    );
-  }
-  function fillPicker(slot){
-    pickerList.innerHTML = allowedEssences(slot)
-      .map(e => `<option value="${escapeHtml(e.name)}"></option>`).join('');
+  // Keep the shared esspicker menu category-aware for Loadout slots: only offer
+  // essences a slot can still receive — category filter, single-distinct-spell
+  // rule, and a free tier left (mirrors the addEssence() guards).
+  if (window.EssPicker){
+    window.EssPicker.filters.build = function(e, input){
+      const slot = input.getAttribute('data-slot');
+      const s = slot && active().slots[slot];
+      if (!s) return true;
+      if (!appliesTo(e, slotCat(slot, s))) return false;
+      if (isSpell(e) && s.essences.some(en => isSpell(essByNorm[norm(en.name)]) && norm(en.name) !== norm(e.name))) return false;
+      return freeLevel(slot, e.name) != null;
+    };
   }
 
   let openPicker = null; // { slot, type:'essence'|'soul' }
@@ -371,7 +368,7 @@
     }).join('');
     let essPicker = '';
     if (openPicker && openPicker.slot === key && openPicker.type === 'essence'){
-      essPicker = `<input class="ess-input" type="text" data-slot="${key}" list="ess-picker-list" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(tr('build.searchEssence'))}">`;
+      essPicker = `<input class="ess-input" type="text" data-slot="${key}" data-esspick data-esspick-filter="build" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(tr('build.searchEssence'))}">`;
     }
 
     // soul: a single type with a quantity (1-4)
@@ -582,9 +579,8 @@
       ${setEffectsMarkup()}
       ${shoppingMarkup()}
     `;
-    // fill + focus the essence picker if just opened
+    // focus the essence picker if just opened (esspicker.js fills the menu)
     if (openPicker && openPicker.type === 'essence'){
-      fillPicker(openPicker.slot);
       const inp = buildInner.querySelector('.ess-input');
       if (inp) inp.focus();
     }

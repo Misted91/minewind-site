@@ -104,7 +104,6 @@
     if (staticBuilt) return;
     staticBuilt = true;
     tradeInner.innerHTML = `
-      <datalist id="trade-ess-list">${essences.map(e => `<option value="${escapeHtml(e.name)}"></option>`).join('')}</datalist>
       <div class="trade-head">
         <h2 class="trade-title">${escapeHtml(tr('trade.heading'))}</h2>
         <p class="trade-intro">${escapeHtml(tr('trade.intro'))}</p>
@@ -213,7 +212,7 @@
     if (draft.kind === 'essence'){
       body.innerHTML = `
         <div class="trade-row">
-          <input id="t-ess" class="trade-input" type="text" list="trade-ess-list" placeholder="${escapeHtml(tr('trade.pickEssence'))}" autocomplete="off">
+          <input id="t-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('trade.pickEssence'))}" autocomplete="off">
           <select id="t-ess-lvl" class="trade-select">${levelOptions([1], 1)}</select>
         </div>`;
     } else {
@@ -224,7 +223,7 @@
           <button class="chip-x" type="button" data-item-rm="${i}" aria-label="×">×</button>
         </div>`).join('');
       const addBtn = draft.item.essences.length < 3
-        ? `<input id="t-item-ess" class="trade-input" type="text" list="trade-ess-list" placeholder="${escapeHtml(tr('trade.addItemEss'))}" autocomplete="off">` : '';
+        ? `<input id="t-item-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('trade.addItemEss'))}" autocomplete="off">` : '';
       let soul;
       if (draft.item.soul){
         const s = soulByKey[draft.item.soul.type];

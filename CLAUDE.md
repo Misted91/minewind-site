@@ -20,6 +20,10 @@ sert le dossier. Pas d'étape de compilation.
   - `i18n/{fr,en,de,es,it}.js` : chaînes d'UI, une langue par fichier ; chacune
     remplit `window.__I18N_STRINGS__[code]`.
   - `i18n/index.js` : assemble `window.__I18N__` ; **se charge après** les langues.
+  - `esspicker.js` : combobox autocomplete stylé partagé, branché sur tout
+    `<input data-esspick>` (remplace le `<datalist>` natif non stylable).
+    Expose `window.EssPicker.filters` pour des filtres de candidats par input ;
+    `build.js` y enregistre `filters.build` (essences éligibles à un slot).
   - `codex.js` : logique onglet Codex (recherche, cartes, thème, guide, langue).
   - `build.js` : logique onglet Équipement (sets multiples, slots, liste d'achat).
     Gère aussi la barre d'onglets globale (Codex/Équipement/Inventaire/Trade/Mod).
@@ -58,8 +62,10 @@ sert le dossier. Pas d'étape de compilation.
 ## Ordre de chargement (à préserver)
 
 - CSS : `base → chrome → codex → build → trade → inventory → responsive`.
-- JS : `data → i18n/{langues} → i18n/index → codex → build → inventory →
-  firebase-init → trade → trade-mod`. `trade-mod.js` **doit** venir après `trade.js` : il
+- JS : `data → i18n/{langues} → i18n/index → esspicker → codex → build →
+  inventory → firebase-init → trade → trade-mod`. `esspicker.js` **doit** venir
+  avant `build.js` (qui enregistre son filtre via `window.EssPicker`).
+  `trade-mod.js` **doit** venir après `trade.js` : il
   consomme `window.__TRADE__` que `trade.js` met en place (helpers, état partagé
   `verifiedByUid`/`verifiedPseudos` par référence, `getUid`), et y enregistre en
   retour `renderAdmin` / `checkModerator` que `trade.js` appelle de façon gardée.

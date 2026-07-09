@@ -120,7 +120,6 @@
       </div>`).join('');
 
     invInner.innerHTML = `
-      <datalist id="inv-ess-list">${essences.map(e => `<option value="${escapeHtml(e.name)}"></option>`).join('')}</datalist>
       <div class="inv-panel">
         <div class="inv-head">
           <div>
@@ -133,7 +132,7 @@
           </div>
         </div>
         <div class="inv-add">
-          <input id="inv-ess" class="trade-input" type="text" list="inv-ess-list" placeholder="${escapeHtml(tr('inv.searchEssence'))}" autocomplete="off" spellcheck="false">
+          <input id="inv-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('inv.searchEssence'))}" autocomplete="off" spellcheck="false">
           <select id="inv-lvl" class="trade-select"></select>
           <button id="inv-add-btn" class="trade-publish" type="button">${escapeHtml(tr('inv.add'))}</button>
         </div>

@@ -26,6 +26,8 @@ window.__I18N_STRINGS__.en = {
   labelSection: 'Key category',
   labelLevels: 'Effect levels',
   levelWord: 'Level',
+  flipDetails: 'Details',
+  flipBack: 'Back',
   typeSpell: 'Spell',
   typeWeapon: 'Weapon',
   typeArmor: 'Armor',

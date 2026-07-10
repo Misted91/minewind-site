@@ -161,10 +161,18 @@
 
     const capNote = e.cap ? `<div class="cap-note">${escapeHtml(fmt(tr('capNote'), {cap: e.cap, lvl: levelLabelFromCap(e.cap)}))}</div>` : '';
 
-    const aliasTags = (e.aliases && e.aliases.length)
+    // certaines données ont des surnoms en double (ex. « Increased Arrow Damage ») :
+    // on déduplique sans tenir compte de la casse, en gardant le premier vu
+    const aliasList = [];
+    const aliasSeen = new Set();
+    (e.aliases || []).forEach(a => {
+      const k = norm(a);
+      if (k && !aliasSeen.has(k)){ aliasSeen.add(k); aliasList.push(a); }
+    });
+    const aliasTags = aliasList.length
       ? `<div>
            <div class="detail-block-label">${escapeHtml(tr('labelAliases'))}</div>
-           <div class="alias-tags">${e.aliases.map(a => `<span class="alias-tag">${escapeHtml(a)}</span>`).join('')}</div>
+           <div class="alias-tags">${aliasList.map(a => `<span class="alias-tag">${escapeHtml(a)}</span>`).join('')}</div>
          </div>`
       : '';
 
@@ -180,8 +188,21 @@
       ? `<div><div class="detail-block-label">${escapeHtml(tr('labelLevels'))}</div><div class="soul-note">${escapeHtml(tr('levelWord'))} ${escapeHtml(e.levelsRange)}</div></div>`
       : '';
 
+    const detailInner = `${levelsRangeNote}${sectionNote}${soulNote}${aliasTags}`.trim();
+    const hasDetail = detailInner.length > 0;
+
+    // chevron indiquant qu'on peut déplier la carte
+    const caret = hasDetail
+      ? `<span class="card-caret" aria-hidden="true" title="${escapeHtml(tr('flipDetails'))}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`
+      : '';
+
+    // section de détails, dépliée en place au clic (pas de flip 3D)
+    const detail = hasDetail
+      ? `<div class="card-detail"><div class="detail-clip"><div class="detail-inner">${detailInner}</div></div></div>`
+      : '';
+
     return `
-      <article class="essence-card" data-open="${isOpen}" data-key="${escapeHtml(key)}" style="--type-color:${color}">
+      <article class="essence-card${hasDetail ? ' has-detail' : ''}${(isOpen && hasDetail) ? ' open' : ''}" data-key="${escapeHtml(key)}" style="--type-color:${color}">
         <div class="card-top">
           <div>
             <div class="card-heading">
@@ -190,19 +211,15 @@
             </div>
             ${e.section ? `<div class="card-section">${escapeHtml(e.section)}</div>` : ''}
           </div>
-          <button class="fav-btn${favorites.has(key)?' active':''}" type="button" data-fav="${escapeHtml(key)}" title="${escapeHtml(tr('favTitle'))}" aria-label="favorite">${favorites.has(key) ? ICONS.favOn : ICONS.favOff}</button>
+          <div class="card-top-actions">
+            ${caret}
+            <button class="fav-btn${favorites.has(key)?' active':''}" type="button" data-fav="${escapeHtml(key)}" title="${escapeHtml(tr('favTitle'))}" aria-label="favorite">${favorites.has(key) ? ICONS.favOn : ICONS.favOff}</button>
+          </div>
         </div>
         ${e.description ? `<p class="card-desc">${escapeHtml(e.description)}</p>` : ''}
         ${renderPriceRow(e)}
         ${capNote}
-        <div class="card-detail">
-          <div class="detail-inner">
-            ${levelsRangeNote}
-            ${sectionNote}
-            ${soulNote}
-            ${aliasTags}
-          </div>
-        </div>
+        ${detail}
       </article>
     `;
   }
@@ -313,10 +330,13 @@
     const rb = ev.target.closest('[data-reroll]');
     if (rb){ pickRandom(rb.getAttribute('data-reroll')); return; }
     const card = ev.target.closest('.essence-card');
-    if (!card) return;
+    if (!card || !card.classList.contains('has-detail')) return;
     const key = card.getAttribute('data-key');
-    openCardKey = (openCardKey === key) ? null : key;
-    render();
+    const willOpen = !card.classList.contains('open');
+    // mémorise l'état pour le conserver si la liste est re-rendue
+    openCardKey = willOpen ? key : null;
+    // pas de re-render : on bascule la classe, la hauteur s'anime en CSS (grid-rows)
+    card.classList.toggle('open', willOpen);
   });
 
   const RANDOM_POOLS = {

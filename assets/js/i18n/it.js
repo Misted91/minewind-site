@@ -26,6 +26,8 @@ window.__I18N_STRINGS__.it = {
   labelSection: 'Categoria di chiave',
   labelLevels: "Livelli d'effetto",
   levelWord: 'Livello',
+  flipDetails: 'Dettagli',
+  flipBack: 'Indietro',
   typeSpell: 'Incantesimo',
   typeWeapon: 'Arma',
   typeArmor: 'Armatura',

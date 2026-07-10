@@ -3,44 +3,82 @@
    ========================================================================== */
 
 :root{
-  --bg:#0b0c0e;
-  --panel:#141518;
-  --panel-2:#1a1c20;
-  --border: rgba(255,255,255,0.09);
-  --border-strong: rgba(255,255,255,0.17);
-  --text:#e7e8ea;
-  --text-dim:#9197a1;
-  --text-faint:#6a6f78;
-  --accent:#6e8bff;
-  --accent-text:#9db0ff;
-  --accent-soft: rgba(110,139,255,0.12);
-  --gold: var(--accent); /* legacy alias used as JS fallback */
-  --sigil-spell:#9b8cff;
-  --sigil-weapon:#ef6f63;
-  --sigil-armor:#54c98b;
-  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -14px rgba(0,0,0,0.5);
-  --radius:10px;
+  /* ---- Surfaces (obsidienne, éclairée par paliers) ---- */
+  --bg:#0a0b0e;
+  --bg-2:#0d0e12;
+  --panel:#15161c;
+  --panel-2:#1c1e26;
+  --panel-3:#242732;          /* surface imbriquée / survol profond */
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+  --hairline: rgba(255,255,255,0.05);
+
+  /* ---- Texte ---- */
+  --text:#edeef2;
+  --text-dim:#a2a8b3;
+  --text-faint:#6c717c;
+
+  /* ---- Accent « essence » : or / ambre ---- */
+  --accent:#e3b45e;           /* or principal */
+  --accent-text:#f2cd88;      /* or clair, pour le texte sur fond sombre */
+  --accent-soft: rgba(227,180,94,0.13);
+  --accent-line: rgba(227,180,94,0.42);
+  --gold: var(--accent);      /* alias legacy utilisé comme fallback JS */
+  --gold-bright:#f4d38c;
+
+  /* ---- Sigils par type d'essence ---- */
+  --sigil-spell:#a68bff;      /* sort — arcane */
+  --sigil-weapon:#ef6f63;     /* arme — braise */
+  --sigil-armor:#57cd8f;      /* armure — jade */
+  --danger:#e8595d;           /* actions destructives / expiration */
+
+  /* ---- Élévation ---- */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow: 0 2px 6px rgba(0,0,0,0.35), 0 14px 32px -18px rgba(0,0,0,0.65);
+  --shadow-lg: 0 10px 50px -14px rgba(0,0,0,0.72);
+  --glow: 0 0 0 1px var(--accent-line), 0 10px 34px -12px rgba(227,180,94,0.28);
+
+  /* ---- Rayons ---- */
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:18px;
+
+  /* ---- Typo ---- */
   --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --font-display:'Cinzel','Inter',Georgia,serif;
 }
 
-/* ---------- Light theme ---------- */
+/* ---------- Light theme (parchemin) ---------- */
 html[data-theme="light"]{
-  --bg:#ffffff;
+  --bg:#f7f4ee;
+  --bg-2:#efeae0;
   --panel:#ffffff;
-  --panel-2:#f5f6f8;
-  --border: rgba(0,0,0,0.10);
-  --border-strong: rgba(0,0,0,0.18);
-  --text:#17181b;
-  --text-dim:#595f68;
-  --text-faint:#878d96;
-  --accent:#4f6bf6;
-  --accent-text:#3f57d8;
-  --accent-soft: rgba(79,107,246,0.10);
+  --panel-2:#f4f0e8;
+  --panel-3:#ece6d9;
+  --border: rgba(40,32,18,0.11);
+  --border-strong: rgba(40,32,18,0.20);
+  --hairline: rgba(40,32,18,0.06);
+
+  --text:#1d1a15;
+  --text-dim:#5d564a;
+  --text-faint:#8c8578;
+
+  --accent:#b7842a;
+  --accent-text:#8a6217;
+  --accent-soft: rgba(183,132,42,0.12);
+  --accent-line: rgba(183,132,42,0.40);
+  --gold-bright:#a9791f;
+
   --sigil-spell:#7c5cf0;
   --sigil-weapon:#d8473c;
   --sigil-armor:#1f9d57;
-  --shadow: 0 1px 2px rgba(20,20,40,0.06), 0 10px 30px -18px rgba(20,20,40,0.18);
+  --danger:#cf3b40;
+
+  --shadow-sm: 0 1px 2px rgba(60,50,30,0.07);
+  --shadow: 0 2px 8px rgba(60,50,30,0.08), 0 14px 34px -20px rgba(60,50,30,0.24);
+  --shadow-lg: 0 12px 44px -16px rgba(60,50,30,0.28);
+  --glow: 0 0 0 1px var(--accent-line), 0 10px 30px -12px rgba(183,132,42,0.22);
 }
 
 /* ---------- Reset ---------- */
@@ -66,9 +104,17 @@ body::before{
   z-index:-2;
   pointer-events:none;
   background:
-    radial-gradient(72% 46% at 50% -8%, var(--accent-soft), transparent 68%),
-    radial-gradient(48% 34% at 88% 6%, rgba(155,140,255,0.08), transparent 70%);
-  animation: ambientDrift 18s ease-in-out infinite alternate;
+    radial-gradient(68% 42% at 50% -10%, rgba(227,180,94,0.14), transparent 66%),
+    radial-gradient(46% 32% at 88% 4%, rgba(166,139,255,0.09), transparent 72%),
+    radial-gradient(60% 50% at 12% 108%, rgba(87,205,143,0.05), transparent 70%),
+    radial-gradient(120% 90% at 50% 40%, transparent 62%, rgba(0,0,0,0.45));
+  animation: ambientDrift 20s ease-in-out infinite alternate;
+}
+html[data-theme="light"] body::before{
+  background:
+    radial-gradient(68% 42% at 50% -10%, rgba(183,132,42,0.10), transparent 66%),
+    radial-gradient(46% 32% at 88% 4%, rgba(124,92,240,0.05), transparent 72%),
+    radial-gradient(120% 90% at 50% 40%, transparent 70%, rgba(60,50,30,0.06));
 }
 
 /* ---------- Fine grain texture overlay ---------- */

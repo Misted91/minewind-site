@@ -26,6 +26,8 @@ window.__I18N_STRINGS__.de = {
   labelSection: 'Schlüsselkategorie',
   labelLevels: 'Effektstufen',
   levelWord: 'Stufe',
+  flipDetails: 'Details',
+  flipBack: 'Zurück',
   typeSpell: 'Zauber',
   typeWeapon: 'Waffe',
   typeArmor: 'Rüstung',

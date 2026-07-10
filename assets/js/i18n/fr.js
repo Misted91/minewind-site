@@ -26,6 +26,8 @@ window.__I18N_STRINGS__.fr = {
   labelSection: 'Catégorie de clé',
   labelLevels: "Niveaux d'effet",
   levelWord: 'Niveau',
+  flipDetails: 'Détails',
+  flipBack: 'Retour',
   typeSpell: 'Sort',
   typeWeapon: 'Arme',
   typeArmor: 'Armure',

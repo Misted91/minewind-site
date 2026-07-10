@@ -26,6 +26,8 @@ window.__I18N_STRINGS__.es = {
   labelSection: 'Categoría de llave',
   labelLevels: 'Niveles de efecto',
   levelWord: 'Nivel',
+  flipDetails: 'Detalles',
+  flipBack: 'Volver',
   typeSpell: 'Hechizo',
   typeWeapon: 'Arma',
   typeArmor: 'Armadura',

@@ -4,4 +4,5 @@
 # Firebase
 firestore.rules
 
-csv
+# Raw CSV sources (used to generate assets/js/data.js)
+csv/

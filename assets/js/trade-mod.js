@@ -103,10 +103,6 @@
     const banTools = `
         <div class="mod-section-title">${escapeHtml(tr('trade.modBanned'))}</div>
         <div class="mod-list">${banned}</div>
-        <div class="trade-row">
-          <input id="t-mod-ban" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.modBanId'))}" autocomplete="off">
-          <button id="t-mod-ban-btn" class="trade-del" type="button">${escapeHtml(tr('trade.modBan'))}</button>
-        </div>
         <div id="t-ban-status" class="trade-status"></div>`;
     const verifiedTools = `
         <div class="mod-section-title">${escapeHtml(tr('trade.modVerifiedUsers'))}</div>
@@ -231,15 +227,10 @@
   // sell — we KEEP their verification so that unbanning fully restores them without
   // re-registration. Mod rights are the one thing we strip, so a banned moderator
   // can't lift their own ban.
-  // `pseudoOverride` lets the verified-accounts list ban a row directly
-  // instead of reading the ban-tools text input.
-  function banByPseudo(pseudoOverride){
-    if (!isMod) return;
+  // Called from a row in the verified-accounts list with that row's pseudo.
+  function banByPseudo(val){
+    if (!isMod || !val) return;
     const uid = uidOf();
-    const usingInput = pseudoOverride === undefined;
-    const input = usingInput ? byId('t-mod-ban') : null;
-    const val = usingInput ? (input && input.value || '').trim() : pseudoOverride;
-    if (!val) return;
     const key = norm(val);
     const uids = new Set();
     Object.keys(verifiedByUid).forEach(u => { if (norm(verifiedByUid[u]) === key) uids.add(u); });
@@ -261,7 +252,7 @@
       .then(snap => Promise.all(snap.docs.map(d => d.ref.delete())))
       .catch(() => {}));
     Promise.all(ops)
-      .then(() => { if (input) input.value = ''; banStatus(tr('trade.modBanDone') + ' (' + uids.size + ')', true); })
+      .then(() => banStatus(tr('trade.modBanDone') + ' (' + uids.size + ')', true))
       .catch(err => banStatus((err && err.message) || tr('trade.errAuth')));
   }
   function unban(id){ if (!isMod) return; FB.db.collection('banned').doc(id).delete().catch(err => banStatus((err && err.message) || tr('trade.errAuth'))); }
@@ -270,7 +261,6 @@
   if (modView) modView.addEventListener('click', (ev) => {
     const t = ev.target;
     if (t.closest('#t-mod-add-btn')){ addModerator(); return; }
-    if (t.closest('#t-mod-ban-btn')){ banByPseudo(); return; }
     const rok = t.closest('[data-req-ok]'); if (rok){ approveReq(rok.getAttribute('data-req-ok')); return; }
     const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
     const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }

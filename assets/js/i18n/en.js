@@ -182,6 +182,10 @@ window.__I18N_STRINGS__.en = {
     confirmBan: 'Ban this pseudo and all its accounts?',
     confirmUnban: 'Unban this account?',
     modErrBanMod: 'You cannot ban a moderator.',
+    modVerifiedUsers: 'Verified accounts',
+    modSearchPlaceholder: 'Search a pseudo or uid…',
+    modNoVerified: 'No verified accounts.',
+    modPromote: 'Promote',
     ttlNotice: 'Listings are automatically deleted after 2 weeks.',
     expiresOn: 'Expires'
   }

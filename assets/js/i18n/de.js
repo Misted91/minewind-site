@@ -182,6 +182,10 @@ window.__I18N_STRINGS__.de = {
     confirmBan: 'Diesen Namen und alle seine Konten bannen?',
     confirmUnban: 'Dieses Konto entbannen?',
     modErrBanMod: 'Ein Moderator kann nicht gebannt werden.',
+    modVerifiedUsers: 'Verifizierte Konten',
+    modSearchPlaceholder: 'Namen oder uid suchen…',
+    modNoVerified: 'Keine verifizierten Konten.',
+    modPromote: 'Befördern',
     ttlNotice: 'Angebote werden nach 2 Wochen automatisch gelöscht.',
     expiresOn: 'Läuft ab am'
   }

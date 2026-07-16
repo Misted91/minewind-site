@@ -28,6 +28,7 @@
   let isOwner = false;  // is the current uid the OWNER (super-admin)? — manages mods + bans
   let pendingReqs = [], modList = [], bannedList = [];
   let unsubReqs = null, unsubMods = null, unsubBanned = null;
+  let verifiedFilter = ''; // live search over the verified-accounts list
 
   // ---- panel render ----
   function renderAdmin(){
@@ -107,6 +108,12 @@
           <button id="t-mod-ban-btn" class="trade-del" type="button">${escapeHtml(tr('trade.modBan'))}</button>
         </div>
         <div id="t-ban-status" class="trade-status"></div>`;
+    const verifiedTools = `
+        <div class="mod-section-title">${escapeHtml(tr('trade.modVerifiedUsers'))}</div>
+        <div class="trade-row">
+          <input id="t-mod-verified-search" class="trade-input" type="text" maxlength="64" placeholder="${escapeHtml(tr('trade.modSearchPlaceholder'))}" autocomplete="off" value="${escapeHtml(verifiedFilter)}">
+        </div>
+        <div class="mod-list">${renderVerifiedList(uid)}</div>`;
     el.innerHTML = `
       <div class="mod-panel">
         <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
@@ -114,7 +121,39 @@
         <div class="mod-list">${reqs}</div>
         ${ownerTools}
         ${banTools}
+        ${verifiedTools}
       </div>`;
+  }
+
+  // list of every verified account (pseudo + uid), filterable by the search
+  // box, with an inline promote-to-mod (owner only) / ban action per row.
+  function renderVerifiedList(uid){
+    const modIds = new Set(modList.map(m => m.id));
+    const bannedIds = new Set(bannedList.map(b => b.id));
+    const entries = Object.keys(verifiedByUid).map(u => ({ uid: u, pseudo: verifiedByUid[u] }));
+    entries.sort((a, b) => norm(a.pseudo).localeCompare(norm(b.pseudo)));
+    const q = norm(verifiedFilter);
+    const filtered = q
+      ? entries.filter(e => norm(e.pseudo).includes(q) || e.uid.toLowerCase().includes(q))
+      : entries;
+    if (!filtered.length) return `<p class="trade-empty">${escapeHtml(tr('trade.modNoVerified'))}</p>`;
+    return filtered.map(e => {
+      const you = e.uid === uid ? ' ' + escapeHtml(tr('trade.modYou')) : '';
+      const entryIsMod = modIds.has(e.uid);
+      const entryIsBanned = bannedIds.has(e.uid);
+      const status = entryIsMod
+        ? `<span class="mod-mode login">${escapeHtml(tr('trade.modMods'))}</span>`
+        : entryIsBanned ? `<span class="mod-mode">${escapeHtml(tr('trade.modBanned'))}</span>` : '';
+      const promoteBtn = (isOwner && !entryIsMod && !entryIsBanned)
+        ? `<button class="mod-ok" type="button" data-verified-promote="${escapeHtml(e.uid)}">${escapeHtml(tr('trade.modPromote'))}</button>` : '';
+      const banBtn = (!entryIsMod && !entryIsBanned)
+        ? `<button class="mod-no" type="button" data-verified-ban="${escapeHtml(e.uid)}">${escapeHtml(tr('trade.modBan'))}</button>` : '';
+      return `
+      <div class="mod-row">
+        <div class="mod-row-main">${status}<strong>${escapeHtml(e.pseudo)}</strong>${you}<span class="mod-uid">${escapeHtml(e.uid)}</span></div>
+        <div class="mod-row-act">${promoteBtn}${banBtn}</div>
+      </div>`;
+    }).join('');
   }
 
   // ---- subscriptions ----
@@ -164,19 +203,22 @@
   }
   function rejectReq(id){ FB.db.collection('requests').doc(id).delete().catch(() => {}); }
 
-  function addModerator(){
+  // Promote by PSEUDO, not uid (nobody knows their own uid). A pseudo can map
+  // to several uids (same person, several PCs) → make every one of them a mod.
+  // `pseudoOverride` lets the verified-accounts list promote a row directly
+  // (already knows the pseudo) instead of reading the owner-tools text input.
+  function addModerator(pseudoOverride){
     if (!isOwner) return;
     const uid = uidOf();
-    const val = (byId('t-mod-add').value || '').trim();
+    const usingInput = pseudoOverride === undefined;
+    const val = usingInput ? (byId('t-mod-add').value || '').trim() : pseudoOverride;
     if (!val) return;
-    // Promote by PSEUDO, not uid (nobody knows their own uid). A pseudo can map
-    // to several uids (same person, several PCs) → make every one of them a mod.
     const key = norm(val);
     const uids = Object.keys(verifiedByUid).filter(u => norm(verifiedByUid[u]) === key);
     if (!uids.length){ modStatus(tr('trade.modErrNotVerified')); return; }
     Promise.all(uids.map(u => FB.db.collection('moderators').doc(u).set({
       by: uid, at: firebase.firestore.FieldValue.serverTimestamp()
-    }))).then(() => { const i = byId('t-mod-add'); if (i) i.value = ''; })
+    }))).then(() => { if (usingInput){ const i = byId('t-mod-add'); if (i) i.value = ''; } })
       .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
   }
   function removeModerator(id){ if (!isOwner) return; FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }
@@ -189,11 +231,14 @@
   // sell — we KEEP their verification so that unbanning fully restores them without
   // re-registration. Mod rights are the one thing we strip, so a banned moderator
   // can't lift their own ban.
-  function banByPseudo(){
+  // `pseudoOverride` lets the verified-accounts list ban a row directly
+  // instead of reading the ban-tools text input.
+  function banByPseudo(pseudoOverride){
     if (!isMod) return;
     const uid = uidOf();
-    const input = byId('t-mod-ban');
-    const val = (input && input.value || '').trim();
+    const usingInput = pseudoOverride === undefined;
+    const input = usingInput ? byId('t-mod-ban') : null;
+    const val = usingInput ? (input && input.value || '').trim() : pseudoOverride;
     if (!val) return;
     const key = norm(val);
     const uids = new Set();
@@ -230,6 +275,21 @@
     const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
     const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }
     const brm = t.closest('[data-ban-rm]'); if (brm){ if (confirm(tr('trade.confirmUnban'))) unban(brm.getAttribute('data-ban-rm')); return; }
+    const vpromote = t.closest('[data-verified-promote]');
+    if (vpromote){ addModerator(verifiedByUid[vpromote.getAttribute('data-verified-promote')]); return; }
+    const vban = t.closest('[data-verified-ban]');
+    if (vban){ banByPseudo(verifiedByUid[vban.getAttribute('data-verified-ban')]); return; }
+  });
+
+  // live-filter the verified-accounts list as the moderator types; renderAdmin()
+  // rebuilds the whole panel, so re-focus + restore the caret afterwards.
+  if (modView) modView.addEventListener('input', (ev) => {
+    if (!ev.target || ev.target.id !== 't-mod-verified-search') return;
+    verifiedFilter = ev.target.value;
+    const pos = ev.target.selectionStart;
+    renderAdmin();
+    const el = byId('t-mod-verified-search');
+    if (el){ el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
   });
 
   // ---- expose to trade.js + set the initial (hidden) tab state ----

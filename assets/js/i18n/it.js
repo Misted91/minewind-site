@@ -182,6 +182,10 @@ window.__I18N_STRINGS__.it = {
     confirmBan: 'Bandire questo nome e tutti i suoi account?',
     confirmUnban: 'Riammettere questo account?',
     modErrBanMod: 'Non puoi bandire un moderatore.',
+    modVerifiedUsers: 'Account verificati',
+    modSearchPlaceholder: 'Cerca un nome o uid…',
+    modNoVerified: 'Nessun account verificato.',
+    modPromote: 'Promuovi',
     ttlNotice: 'Gli annunci vengono eliminati automaticamente dopo 2 settimane.',
     expiresOn: 'Scade il'
   }

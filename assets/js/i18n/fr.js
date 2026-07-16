@@ -182,6 +182,10 @@ window.__I18N_STRINGS__.fr = {
     confirmBan: 'Bannir ce pseudo et tous ses comptes ?',
     confirmUnban: 'Débannir ce compte ?',
     modErrBanMod: 'Impossible de bannir un modérateur.',
+    modVerifiedUsers: 'Comptes vérifiés',
+    modSearchPlaceholder: 'Rechercher un pseudo ou un uid…',
+    modNoVerified: 'Aucun compte vérifié.',
+    modPromote: 'Promouvoir',
     ttlNotice: 'Les annonces sont automatiquement supprimées après 2 semaines.',
     expiresOn: 'Expire le'
   }

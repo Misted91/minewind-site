@@ -95,10 +95,6 @@
     const ownerTools = !isOwner ? '' : `
         <div class="mod-section-title">${escapeHtml(tr('trade.modMods'))}</div>
         <div class="mod-list">${mods}</div>
-        <div class="trade-row">
-          <input id="t-mod-add" class="trade-input" type="text" maxlength="128" placeholder="${escapeHtml(tr('trade.modAddId'))}" autocomplete="off">
-          <button id="t-mod-add-btn" class="trade-publish" type="button">${escapeHtml(tr('trade.modAdd'))}</button>
-        </div>
         <div id="t-mod-status" class="trade-status"></div>`;
     const banTools = `
         <div class="mod-section-title">${escapeHtml(tr('trade.modBanned'))}</div>
@@ -201,21 +197,16 @@
 
   // Promote by PSEUDO, not uid (nobody knows their own uid). A pseudo can map
   // to several uids (same person, several PCs) → make every one of them a mod.
-  // `pseudoOverride` lets the verified-accounts list promote a row directly
-  // (already knows the pseudo) instead of reading the owner-tools text input.
-  function addModerator(pseudoOverride){
-    if (!isOwner) return;
+  // Called from a row in the verified-accounts list with that row's pseudo.
+  function addModerator(val){
+    if (!isOwner || !val) return;
     const uid = uidOf();
-    const usingInput = pseudoOverride === undefined;
-    const val = usingInput ? (byId('t-mod-add').value || '').trim() : pseudoOverride;
-    if (!val) return;
     const key = norm(val);
     const uids = Object.keys(verifiedByUid).filter(u => norm(verifiedByUid[u]) === key);
     if (!uids.length){ modStatus(tr('trade.modErrNotVerified')); return; }
     Promise.all(uids.map(u => FB.db.collection('moderators').doc(u).set({
       by: uid, at: firebase.firestore.FieldValue.serverTimestamp()
-    }))).then(() => { if (usingInput){ const i = byId('t-mod-add'); if (i) i.value = ''; } })
-      .catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
+    }))).catch(err => modStatus((err && err.message) || tr('trade.errAuth')));
   }
   function removeModerator(id){ if (!isOwner) return; FB.db.collection('moderators').doc(id).delete().catch(err => modStatus((err && err.message) || tr('trade.errAuth'))); }
   function modStatus(msg){ const el = byId('t-mod-status'); if (el){ el.textContent = msg; el.className = 'trade-status err'; } }
@@ -260,7 +251,6 @@
   // ---- events ----
   if (modView) modView.addEventListener('click', (ev) => {
     const t = ev.target;
-    if (t.closest('#t-mod-add-btn')){ addModerator(); return; }
     const rok = t.closest('[data-req-ok]'); if (rok){ approveReq(rok.getAttribute('data-req-ok')); return; }
     const rno = t.closest('[data-req-no]'); if (rno){ rejectReq(rno.getAttribute('data-req-no')); return; }
     const mrm = t.closest('[data-mod-rm]'); if (mrm){ if (confirm(tr('trade.confirmModRemove'))) removeModerator(mrm.getAttribute('data-mod-rm')); return; }

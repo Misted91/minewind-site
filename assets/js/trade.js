@@ -320,7 +320,6 @@
     // let the Équipement tab refresh its market offers section
     document.dispatchEvent(new CustomEvent('tradelistings'));
     const mineDocs = docs.filter(doc => isMine(doc.data()));
-    const otherDocs = docs.filter(doc => !isMine(doc.data()));
 
     // "My sales" tab — the sell form (gate) sits above; only list once the
     // seller is verified, otherwise the gate already explains what to do.
@@ -331,10 +330,12 @@
         : `<p class="trade-empty">${escapeHtml(tr('trade.myEmpty'))}</p>`);
     }
 
+    // "Other sellers" tab shows the whole board, including my own listings,
+    // so I can see how my offers look next to everyone else's.
     const el = byId('trade-listings');
     if (!el) return;
-    el.innerHTML = otherDocs.length
-      ? otherDocs.map(listingMarkup).join('')
+    el.innerHTML = docs.length
+      ? docs.map(listingMarkup).join('')
       : `<p class="trade-empty">${escapeHtml(tr('trade.empty'))}</p>`;
   }
 

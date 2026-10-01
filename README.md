@@ -11,7 +11,7 @@ minewind-site/
 ├─ assets/
 │  ├─ css/                 Feuilles de style découpées par responsabilité
 │  │  ├─ base.css            tokens (variables), thèmes clair/sombre, reset, layout, icônes
-│  │  ├─ chrome.css          bouton thème, sélecteur de langue, hero, onglets, footer
+│  │  ├─ chrome.css          bouton thème, langue, hero, onglets, en-tête commun des onglets, footer
 │  │  ├─ codex.css           onglet Codex : recherche, légende, boutons aléatoires, cartes
 │  │  ├─ build.css           onglet Équipement : sets, slots, âmes, liste d'achat
 │  │  ├─ trade.css           onglet Trade : formulaire de vente, annonces, modération

@@ -2,10 +2,14 @@
    codex.css — Codex tab: search, legend, random/re-roll, essence cards
    ========================================================================== */
 
+/* One content column for the whole tab: search, filters, legend, guide and
+   result cards all share the same width and left/right edges. */
+#codex-view{ max-width:720px; margin:0 auto; }
+
 /* ---------- Search ---------- */
 .search-shell{
-  max-width: 560px;
-  margin: 0 auto 14px;
+  margin: 0 0 14px;
+  scroll-margin-top: 16px;
   animation: fadeRise 0.7s 0.34s cubic-bezier(.2,.7,.3,1) both;
 }
 .search-frame{
@@ -37,6 +41,7 @@
   font-size:15px;
   padding:13px 0;
   min-width:0;
+  text-overflow:ellipsis;   /* long example placeholder ends with … instead of a hard cut */
 }
 #search-input::placeholder{ color: var(--text-faint); }
 .search-count{
@@ -60,17 +65,24 @@
   text-transform:uppercase;
   color: var(--text-faint);
   text-align:center;
-  margin-bottom:16px;
+  margin-bottom:6px;
+}
+.idle-hint{
+  margin:0 0 14px;
+  text-align:center;
+  font-size:13px;
+  color: var(--text-dim);
 }
 .legend-grid{
   display:grid;
   grid-template-columns: repeat(auto-fit, minmax(138px,1fr));
   gap:6px;
-  max-width:720px;
-  margin: 0 auto 28px;
+  margin: 0 0 12px;
 }
+/* each tier tile is a button: it lists the essences priced at that tier */
 .legend-item{
   position:relative;
+  width:100%;
   background: var(--panel);
   border:1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -81,6 +93,9 @@
   gap:8px;
   font-family: var(--font-mono);
   font-size:12px;
+  color: var(--text-dim);
+  text-align:left;
+  cursor:pointer;
   overflow:hidden;
   transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
@@ -90,10 +105,21 @@
   background: var(--accent);
   opacity:0; transition: opacity 0.15s ease;
 }
-.legend-item:hover{ border-color: var(--accent-line); background: var(--panel-2); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-.legend-item:hover::before{ opacity:0.8; }
+.legend-item:not(:disabled):hover{ border-color: var(--accent-line); background: var(--panel-2); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.legend-item:not(:disabled):hover::before{ opacity:0.8; }
+.legend-item:not(:disabled):active{ transform: translateY(0) scale(0.98); }
+.legend-item:disabled{ cursor:default; opacity:0.45; }   /* no essence at this tier yet */
 .legend-tier{ color: var(--accent-text); font-weight:600; flex:none; }
 .legend-value{ color: var(--text-dim); font-size:11px; text-align:right; white-space:normal; word-break:break-word; min-width:0; }
+/* currency units used by the legend and the price pills */
+.legend-units{
+  margin:0 0 26px;
+  text-align:center;
+  font-family: var(--font-mono);
+  font-size:11px;
+  line-height:1.6;
+  color: var(--text-faint);
+}
 
 /* ---------- Random buttons ---------- */
 .random-row{
@@ -121,8 +147,7 @@
 
 /* ---------- Beginner guide ---------- */
 .guide{
-  max-width:720px;
-  margin: 28px auto 0;
+  margin: 28px 0 0;
 }
 .guide-toggle{
   display:flex;
@@ -268,12 +293,18 @@
   display:inline-flex;
   align-items:center; justify-content:center;
   width:30px; height:30px;
+  padding:0;
   color: var(--text-faint);
-  transition: transform 0.32s cubic-bezier(.2,.7,.3,1), color 0.15s ease;
+  background:transparent;
+  border:0; border-radius:8px;
+  cursor:pointer;
+  transition: color 0.15s ease, background 0.15s ease;
 }
-.card-caret .ico{ width:16px; height:16px; }
+.card-caret:hover{ background: var(--panel-2); }
+.card-caret .ico{ width:16px; height:16px; transition: transform 0.32s cubic-bezier(.2,.7,.3,1); }
 .essence-card:hover .card-caret{ color: var(--accent-text); }
-.essence-card.open .card-caret{ transform: rotate(180deg); color: var(--accent-text); }
+.essence-card.open .card-caret{ color: var(--accent-text); }
+.essence-card.open .card-caret .ico{ transform: rotate(180deg); }
 
 .card-detail{
   display:grid;
@@ -281,13 +312,13 @@
   transition: grid-template-rows 0.4s cubic-bezier(.2,.7,.3,1);
 }
 .essence-card.open .card-detail{ grid-template-rows: 1fr; }
-.detail-clip{ overflow:hidden; min-height:0; }
+.detail-clip{ overflow:hidden; min-height:0; visibility:hidden; transition: visibility 0s linear 0.4s; }
+.essence-card.open .detail-clip{ visibility:visible; transition-delay:0s; }
 
 /* ---------- Filter bar (type / section / favorites) ---------- */
 .filter-bar{
-  display:flex; flex-wrap:wrap; align-items:center; gap:6px;
-  max-width:640px;
-  margin:0 auto 8px;
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px;
+  margin:0 0 8px;
 }
 .filter-bar:empty{ display:none; }
 .filter-sep{ width:1px; height:18px; background:var(--border); margin:0 2px; }
@@ -308,6 +339,9 @@
 .filter-chip.active{ color: var(--text); background: var(--accent-soft); border-color: var(--accent); }
 .filter-chip.fav.active{ color: var(--gold-bright, #f0c878); border-color: var(--gold, #d4a543); background: rgba(212,165,67,0.12); }
 .filter-chip .ico{ width:13px; height:13px; }
+/* active price-tier filter (set from the legend) — click to clear */
+.filter-chip.tier{ font-family: var(--font-mono); color: var(--accent-text); }
+.filter-chip .chip-close{ font-size:14px; line-height:1; opacity:0.75; margin-left:2px; }
 
 /* ---------- Favorite star on cards ---------- */
 .fav-btn{
@@ -338,6 +372,7 @@
   flex-wrap:wrap;
 }
 .card-name{
+  margin:0;
   font-size:16px;
   font-weight:600;
   color: var(--text);
@@ -378,9 +413,9 @@
 }
 .price-pill .lvl-label{
   display:block;
-  font-size:9px;
+  font-size:10px;
   letter-spacing:0.06em;
-  color: var(--text-faint);
+  color: var(--text-dim);
   margin-bottom:3px;
 }
 .price-pill .lvl-value{
@@ -391,8 +426,8 @@
 }
 .price-pill.filled{ border-color: var(--accent-line); background: var(--accent-soft); }
 .price-pill.filled .lvl-value{ color: var(--accent-text); }
-.price-pill.empty{ opacity:0.5; }
-.price-pill.empty .lvl-value{ color: var(--text-faint); }
+/* the level(s) matching the active tier filter */
+.price-pill.match{ border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .price-pill.note{
   color: var(--text-dim);
   font-family: var(--font-sans);

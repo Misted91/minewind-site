@@ -9,18 +9,21 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/base.css?v=20260710h">
-<link rel="stylesheet" href="assets/css/chrome.css?v=20260710f">
-<link rel="stylesheet" href="assets/css/codex.css?v=20260710j">
-<link rel="stylesheet" href="assets/css/build.css?v=20260710i">
-<link rel="stylesheet" href="assets/css/trade.css?v=20260710h">
-<link rel="stylesheet" href="assets/css/inventory.css?v=20260709a">
-<link rel="stylesheet" href="assets/css/responsive.css?v=20260709a">
+<link rel="stylesheet" href="assets/css/base.css?v=20261001a">
+<link rel="stylesheet" href="assets/css/chrome.css?v=20261001a">
+<link rel="stylesheet" href="assets/css/codex.css?v=20261001a">
+<link rel="stylesheet" href="assets/css/build.css?v=20261001a">
+<link rel="stylesheet" href="assets/css/trade.css?v=20261001a">
+<link rel="stylesheet" href="assets/css/inventory.css?v=20261001a">
+<link rel="stylesheet" href="assets/css/responsive.css?v=20261001a">
 <script>
-  // set theme before paint to avoid a flash
+  // set theme + active tab before paint to avoid a flash
   try {
     var t = localStorage.getItem('minewind-theme');
     if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    // same rule as setTab() in build.js: a shared-set link opens Équipement, else the saved tab
+    var tab = /[#&]s=/.test(location.hash) ? 'build' : localStorage.getItem('minewind-tab');
+    document.documentElement.setAttribute('data-tab', (tab === 'build' || tab === 'trade' || tab === 'inv') ? tab : 'codex');
   } catch (e) {}
 </script>
 </head>
@@ -30,7 +33,7 @@
 <div class="wrap">
 
   <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Theme"></button>
-  <div class="lang-switch" id="lang-switch"></div>
+  <div class="lang-switch" id="lang-switch" role="group" data-i18n-aria-label="langLabel" aria-label="Langue"></div>
 
   <header class="hero">
     <div class="hero-emblem" aria-hidden="true">
@@ -38,24 +41,24 @@
     </div>
     <div class="eyebrow">Minewind · Codex</div>
     <h1 class="title" data-i18n="title">Codex des Essences</h1>
-    <p class="subtitle" data-i18n="subtitle">Cherchez une essence par son nom ou son surnom  — prix par palier et effet, en un coup d'œil.</p>
+    <p class="subtitle" data-i18n="subtitle">Cherche une essence par son nom ou son surnom — prix par palier et effet, en un coup d'œil.</p>
     <div class="meta-line" id="meta-line"></div>
   </header>
 
-  <nav class="tabs" id="tabs">
-    <button class="tab active" type="button" data-tab="codex">Codex</button>
-    <button class="tab" type="button" data-tab="build" data-i18n="build.tab">Équipement</button>
-    <button class="tab" type="button" data-tab="inv" data-i18n="inv.tab">Inventaire</button>
-    <button class="tab" type="button" data-tab="trade" data-i18n="trade.tab">Trade</button>
-    <button class="tab" type="button" data-tab="mod" data-i18n="trade.modTab" hidden>Modération</button>
+  <nav class="tabs" id="tabs" role="tablist" data-i18n-aria-label="tabsLabel" aria-label="Sections du site">
+    <button class="tab active" type="button" role="tab" id="tab-codex" aria-controls="codex-view" aria-selected="true" data-tab="codex">Codex</button>
+    <button class="tab" type="button" role="tab" id="tab-build" aria-controls="build-view" aria-selected="false" data-tab="build" data-i18n="build.tab">Équipement</button>
+    <button class="tab" type="button" role="tab" id="tab-inv" aria-controls="inv-view" aria-selected="false" data-tab="inv" data-i18n="inv.tab">Inventaire</button>
+    <button class="tab" type="button" role="tab" id="tab-trade" aria-controls="trade-view" aria-selected="false" data-tab="trade" data-i18n="trade.tab">Trade</button>
+    <button class="tab" type="button" role="tab" id="tab-mod" aria-controls="mod-view" aria-selected="false" data-tab="mod" data-i18n="trade.modTab" hidden>Modération</button>
   </nav>
 
-  <div id="codex-view">
+  <div id="codex-view" role="tabpanel" aria-labelledby="tab-codex">
 
   <div class="search-shell">
     <div class="search-frame">
       <span class="search-glyph"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
-      <input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Curse of Living Flames, colf, vamp strike, web eater…" autocomplete="off" spellcheck="false">
+      <input type="text" id="search-input" data-i18n-placeholder="searchPlaceholder" placeholder="Curse of Living Flames, colf, vamp strike, web eater…" data-i18n-aria-label="searchLabel" aria-label="Rechercher une essence" autocomplete="off" spellcheck="false">
       <span class="search-count" id="search-count"></span>
     </div>
   </div>
@@ -64,7 +67,9 @@
 
   <div id="idle-panel">
     <div class="idle-heading" data-i18n="idleHeading">Échelle des paliers de prix observés sur le serveur</div>
+    <p class="idle-hint" data-i18n="tierHint">Choisis un palier pour voir ses essences.</p>
     <div class="legend-grid" id="legend-grid"></div>
+    <p class="legend-units" data-i18n="units">d&nbsp;=&nbsp;dragon&nbsp;egg · s&nbsp;=&nbsp;stack&nbsp;(64&nbsp;d) · sh&nbsp;=&nbsp;shegg&nbsp;(1&nbsp;728&nbsp;d)</p>
     <div class="random-row">
       <button class="random-btn" id="random-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c.3 4.5 3.5 7.7 8 8-4.5.3-7.7 3.5-8 8-.3-4.5-3.5-7.7-8-8 4.5-.3 7.7-3.5 8-8z"/></svg> <span data-i18n="randomEssence">Essence au hasard</span></button>
       <button class="random-btn" id="surprise-btn"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 4 7V3h4l10.5 10.5"/><path d="m13 19 6-6"/><path d="m16 16 5 5"/><path d="m19.5 20.5 1-1"/></svg> <span data-i18n="randomWeapon">Une arme au hasard</span></button>
@@ -81,19 +86,19 @@
 
   </div><!-- /codex-view -->
 
-  <div id="build-view" hidden>
+  <div id="build-view" role="tabpanel" aria-labelledby="tab-build" hidden>
     <div id="build-inner"></div>
   </div>
 
-  <div id="inv-view" hidden>
+  <div id="inv-view" role="tabpanel" aria-labelledby="tab-inv" hidden>
     <div id="inv-inner"></div>
   </div>
 
-  <div id="trade-view" hidden>
+  <div id="trade-view" role="tabpanel" aria-labelledby="tab-trade" hidden>
     <div id="trade-inner"></div>
   </div>
 
-  <div id="mod-view" hidden>
+  <div id="mod-view" role="tabpanel" aria-labelledby="tab-mod" hidden>
     <div id="mod-inner"></div>
   </div>
 
@@ -106,23 +111,23 @@
 </div>
 
 <script src="assets/js/data.js?v=20250701c"></script>
-<script src="assets/js/i18n/fr.js?v=20260716a"></script>
-<script src="assets/js/i18n/en.js?v=20260716a"></script>
-<script src="assets/js/i18n/de.js?v=20260716a"></script>
-<script src="assets/js/i18n/es.js?v=20260716a"></script>
-<script src="assets/js/i18n/it.js?v=20260716a"></script>
+<script src="assets/js/i18n/fr.js?v=20261001a"></script>
+<script src="assets/js/i18n/en.js?v=20261001a"></script>
+<script src="assets/js/i18n/de.js?v=20261001a"></script>
+<script src="assets/js/i18n/es.js?v=20261001a"></script>
+<script src="assets/js/i18n/it.js?v=20261001a"></script>
 <script src="assets/js/i18n/index.js?v=20250701c"></script>
 <script src="assets/js/esspicker.js?v=20260709a"></script>
-<script src="assets/js/selectpick.js?v=20260710a"></script>
-<script src="assets/js/codex.js?v=20260710g"></script>
-<script src="assets/js/build.js?v=20260709b"></script>
-<script src="assets/js/inventory.js?v=20260709a"></script>
+<script src="assets/js/selectpick.js?v=20261001a"></script>
+<script src="assets/js/codex.js?v=20261001a"></script>
+<script src="assets/js/build.js?v=20261001a"></script>
+<script src="assets/js/inventory.js?v=20261001a"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-check-compat.js"></script>
 <script src="assets/js/firebase-init.js?v=20260706a"></script>
-<script src="assets/js/trade.js?v=20260716a"></script>
-<script src="assets/js/trade-mod.js?v=20260716c"></script>
+<script src="assets/js/trade.js?v=20261001a"></script>
+<script src="assets/js/trade-mod.js?v=20261001a"></script>
 </body>
 </html>

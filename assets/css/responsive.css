@@ -8,6 +8,20 @@
   .slots{ grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); }
 }
 
+/* ---------- Two-column loadout: the 5th piece (offhand) takes the full last
+   row instead of leaving a hole, with its two blocks side by side ---------- */
+@media (min-width: 601px){
+  .slot:last-child:nth-child(odd){ grid-column: 1 / -1; }
+  .slot:last-child:nth-child(odd):not(.is-empty){
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap:24px;
+    align-items:start;
+  }
+  .slot:last-child:nth-child(odd):not(.is-empty) .slot-name{ grid-column: 1 / -1; }
+  .slot:last-child:nth-child(odd):not(.is-empty) .slot-block{ margin-top:0; }   /* grid margins don't collapse */
+}
+
 /* ---------- Phones ---------- */
 @media (max-width: 600px){
   .wrap{ padding: 56px 14px 72px; }
@@ -17,8 +31,9 @@
   .lang-switch{ top:14px; right:14px; }
   .lang-btn{ padding:4px 6px; font-size:10.5px; }
 
-  /* hero */
-  header.hero{ margin: 24px 0 28px; }
+  /* hero: the decorative emblem goes, so the search starts higher */
+  header.hero{ margin: 14px 0 24px; }
+  .hero-emblem{ display:none; }
   .eyebrow{ margin-bottom:10px; }
   .subtitle{ font-size:14px; }
   .meta-line{ font-size:11px; line-height:1.5; }
@@ -28,6 +43,7 @@
   /* search — 16px avoids iOS auto-zoom on focus */
   #search-input{ font-size:16px; padding:12px 0; }
   .search-count{ font-size:10px; padding:4px 7px; }
+  .search-count.is-idle{ display:none; }   /* leave the room to the example placeholder */
 
   /* filter bar */
   .filter-bar{ gap:5px; }
@@ -49,13 +65,17 @@
   .fav-btn{ width:28px; height:28px; }
 
   /* ---- build tab ---- */
-  .build-head{ flex-direction:column; }
-  .build-head-actions{ width:100%; flex-wrap:wrap; }
-  .set-name-input{ font-size:18px; max-width:none; }
+  .set-name-field{ flex-basis:100%; }
+  .set-name-input{ font-size:16px; max-width:none; }
   .slots{ grid-template-columns:1fr; }
   .lvl-select{ width:130px; }
   .ess-input{ font-size:16px; }
   .shopping-stats{ flex-wrap:wrap; }
+
+  /* ---- inventory: name on its own line, details + quantity below ---- */
+  .inv-row{ flex-wrap:wrap; row-gap:2px; }
+  .inv-row .buy-name{ flex-basis:100%; }
+  .inv-row .inv-qty{ margin-left:auto; }
   .set-tab{ max-width:150px; }
   .buy-slot{ display:none; }
 }
@@ -70,7 +90,8 @@
   .ess-chip-name{ flex-basis:100%; }
   .lvl-select{ flex:1; width:auto; }
 
-  .build-head-actions .build-reset{ flex:1; text-align:center; }
+  .set-actions{ width:100%; }
+  .set-actions .build-reset{ flex:1; text-align:center; }
 }
 
 /* ---------- Essence picker menu (esspicker.js) ---------- */
@@ -84,9 +105,26 @@
   .esspick-sec{ display:none; }             /* avoid crowding on tiny screens */
 }
 
+/* ---------- Touch screens: comfortable tap targets (32–40 px) ----------
+   Placed after the phone rules so it wins over their tighter sizes. */
+@media (pointer: coarse){
+  .theme-toggle{ width:40px; height:40px; }
+  .lang-btn{ min-width:36px; min-height:36px; padding:6px 8px; font-size:11px; }
+  .fav-btn, .card-caret{ width:40px; height:40px; }
+  .card-top-actions{ margin:-6px -8px 0 0; }   /* same visual edge with bigger buttons */
+  .filter-chip{ min-height:34px; padding-top:6px; padding-bottom:6px; }
+  .chip-x{ width:32px; height:32px; font-size:18px; }
+  .inv-step{ width:32px; height:32px; font-size:15px; }
+  .tab, .add-chip, .set-tab, .set-add, .build-reset, .reroll-btn, .random-btn,
+  .kind-btn, .soul-opt, .trade-subtab, .listing-del, .trade-del,
+  .mod-ok, .mod-no{ min-height:36px; }
+  .lvl-select, .soul-count, .trade-select{ min-height:32px; }
+  .own-check{ width:20px; height:20px; }
+}
+
 /* ---------- Touch devices: no sticky hover-lift after a tap ---------- */
 @media (hover: none){
-  .essence-card:hover, .listing:hover, .legend-item:hover,
+  .essence-card:hover, .listing:hover, .legend-item:not(:disabled):hover,
   .random-btn:hover, .filter-chip:hover, .kind-btn:hover,
   .set-tab:hover, .soul-opt:hover, .auth-opt:hover,
   .theme-toggle:hover, .trade-publish:hover, .slot:hover{

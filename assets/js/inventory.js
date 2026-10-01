@@ -20,6 +20,7 @@
     const f = dig(I18N.strings.fr); return f != null ? f : key;
   }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmt(str, vars){ return String(str).replace(/\{(\w+)\}/g, (m,k) => (vars && vars[k] != null) ? vars[k] : m); }
   function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
 
   // ---- data helpers (same conventions as build.js) ----
@@ -106,34 +107,43 @@
       ? `<span class="stat-cost" title="${escapeHtml(tr('inv.estValue'))}">≈ ${Math.round(value*10)/10}s${undetermined ? ' +' : ''}</span>`
       : '';
 
-    const rows = items.map((it, i) => `
+    const rows = items.map((it, i) => {
+      const label = it.name + ' ' + ROMAN[it.level-1];
+      return `
       <div class="inv-row">
         <span class="buy-name">${escapeHtml(it.name)}</span>
         <span class="buy-lvl">${ROMAN[it.level-1]}</span>
         <span class="buy-price">${escapeHtml(priceText(rawOf(it.name, it.level)))}</span>
         <span class="inv-qty">
-          <button class="inv-step" type="button" data-inv-dec="${i}" aria-label="−">−</button>
+          <button class="inv-step" type="button" data-inv-dec="${i}" aria-label="${escapeHtml(tr('inv.qtyDec') + ' — ' + label)}">−</button>
           <span class="inv-count">×${it.qty}</span>
-          <button class="inv-step" type="button" data-inv-inc="${i}" aria-label="+">+</button>
+          <button class="inv-step" type="button" data-inv-inc="${i}" aria-label="${escapeHtml(tr('inv.qtyInc') + ' — ' + label)}">+</button>
         </span>
-        <button class="chip-x" type="button" data-inv-rm="${i}" aria-label="×" title="${escapeHtml(tr('inv.remove'))}">×</button>
-      </div>`).join('');
+        <button class="chip-x" type="button" data-inv-rm="${i}" aria-label="${escapeHtml(fmt(tr('removeItem'), {name: label}))}" title="${escapeHtml(fmt(tr('removeItem'), {name: label}))}">×</button>
+      </div>`;
+    }).join('');
 
     invInner.innerHTML = `
-      <div class="inv-panel">
-        <div class="inv-head">
-          <div>
-            <h2 class="inv-title">${escapeHtml(tr('inv.heading'))}</h2>
-            <p class="inv-intro">${escapeHtml(tr('inv.intro'))}</p>
-          </div>
-          <div class="inv-stats">
-            ${items.length ? `<span class="stat-own">${totalQty} ${escapeHtml(tr('inv.count'))}</span>` : ''}
-            ${valueLabel}
-          </div>
+      <div class="view-head">
+        <div class="view-head-main">
+          <h2 class="view-title">${escapeHtml(tr('inv.heading'))}</h2>
+          <p class="view-intro">${escapeHtml(tr('inv.intro'))}</p>
         </div>
+        ${items.length ? `<div class="view-head-aside inv-stats">
+          <span class="stat-own">${totalQty} ${escapeHtml(tr('inv.count'))}</span>
+          ${valueLabel}
+        </div>` : ''}
+      </div>
+      <div class="inv-panel">
         <div class="inv-add">
-          <input id="inv-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('inv.searchEssence'))}" autocomplete="off" spellcheck="false">
-          <select id="inv-lvl" class="trade-select"></select>
+          <label class="trade-field inv-field-ess">
+            <span class="trade-sub">${escapeHtml(tr('inv.essenceLabel'))}</span>
+            <input id="inv-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('inv.searchEssence'))}" autocomplete="off" spellcheck="false">
+          </label>
+          <label class="trade-field inv-field-lvl">
+            <span class="trade-sub">${escapeHtml(tr('levelWord'))}</span>
+            <select id="inv-lvl" class="trade-select"></select>
+          </label>
           <button id="inv-add-btn" class="trade-publish" type="button">${escapeHtml(tr('inv.add'))}</button>
         </div>
         ${items.length ? `<div class="inv-list">${rows}</div>` : `<p class="inv-empty">${escapeHtml(tr('inv.empty'))}</p>`}
@@ -146,7 +156,9 @@
     const inp = byId('inv-ess'), sel = byId('inv-lvl');
     if (!inp || !sel) return;
     const e = essByNorm[norm(inp.value)];
-    sel.innerHTML = e ? lvlOptions(e.name, levelsOf(e.name)[0].lvl) : `<option value="1">${ROMAN[0]}</option>`;
+    // the levels depend on the essence: nothing to pick until one is chosen
+    sel.innerHTML = e ? lvlOptions(e.name, levelsOf(e.name)[0].lvl) : '<option value="">—</option>';
+    sel.disabled = !e;
   }
 
   function addItem(){

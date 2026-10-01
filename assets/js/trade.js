@@ -19,6 +19,7 @@
     const f = dig(I18N.strings.fr); return f != null ? f : key;
   }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmt(str, vars){ return String(str).replace(/\{(\w+)\}/g, (m,k) => (vars && vars[k] != null) ? vars[k] : m); }
   function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
 
   const ROMAN = ['I','II','III','IV','V'];
@@ -103,21 +104,24 @@
   function buildStaticUI(){
     if (staticBuilt) return;
     staticBuilt = true;
+    const subtab = (key, label) => `<button class="trade-subtab${tradeTab===key?' active':''}" type="button" role="tab" id="trade-subtab-${key}" data-subtab="${key}" aria-controls="trade-panel-${key}" aria-selected="${tradeTab===key}" tabindex="${tradeTab===key ? 0 : -1}">${escapeHtml(tr(label))}</button>`;
     tradeInner.innerHTML = `
-      <div class="trade-head">
-        <h2 class="trade-title">${escapeHtml(tr('trade.heading'))}</h2>
-        <p class="trade-intro">${escapeHtml(tr('trade.intro'))}</p>
-        <p class="trade-hint">${escapeHtml(tr('trade.ttlNotice'))}</p>
+      <div class="view-head">
+        <div class="view-head-main">
+          <h2 class="view-title">${escapeHtml(tr('trade.heading'))}</h2>
+          <p class="view-intro">${escapeHtml(tr('trade.intro'))}</p>
+          <p class="view-hint">${escapeHtml(tr('trade.ttlNotice'))}</p>
+        </div>
       </div>
       <div class="trade-subtabs" id="trade-subtabs" role="tablist">
-        <button class="trade-subtab${tradeTab==='mine'?' active':''}" type="button" role="tab" data-subtab="mine">${escapeHtml(tr('trade.myListings'))}</button>
-        <button class="trade-subtab${tradeTab==='others'?' active':''}" type="button" role="tab" data-subtab="others">${escapeHtml(tr('trade.othersListings'))}</button>
+        ${subtab('mine', 'trade.myListings')}
+        ${subtab('others', 'trade.othersListings')}
       </div>
-      <section class="trade-panel" data-panel="mine"${tradeTab==='mine'?'':' hidden'}>
+      <section class="trade-panel" id="trade-panel-mine" role="tabpanel" aria-labelledby="trade-subtab-mine" data-panel="mine"${tradeTab==='mine'?'':' hidden'}>
         <div id="trade-gate"></div>
         <div id="trade-mine" class="trade-listings"></div>
       </section>
-      <section class="trade-panel" data-panel="others"${tradeTab==='others'?'':' hidden'}>
+      <section class="trade-panel" id="trade-panel-others" role="tabpanel" aria-labelledby="trade-subtab-others" data-panel="others"${tradeTab==='others'?'':' hidden'}>
         <div id="trade-listings" class="trade-listings"></div>
       </section>
     `;
@@ -146,15 +150,15 @@
       </div>
       <div class="trade-form" id="trade-form">
         <div class="trade-row trade-price-row">
-          <input id="t-price" class="trade-input" type="number" min="0" step="any" inputmode="decimal" placeholder="${escapeHtml(tr('trade.priceAmount'))}" autocomplete="off">
-          <select id="t-price-unit" class="trade-select" title="${escapeHtml(tr('trade.priceUnit'))}">${PRICE_UNITS.map(u=>`<option value="${u}"${u===draft.priceUnit?' selected':''}>${u}</option>`).join('')}</select>
+          <input id="t-price" class="trade-input" type="number" min="0" step="any" inputmode="decimal" placeholder="${escapeHtml(tr('trade.priceAmount'))}" aria-label="${escapeHtml(tr('trade.priceAmount'))}" autocomplete="off">
+          <select id="t-price-unit" class="trade-select" title="${escapeHtml(tr('trade.priceUnit'))}" aria-label="${escapeHtml(tr('trade.priceUnit'))}">${PRICE_UNITS.map(u=>`<option value="${u}"${u===draft.priceUnit?' selected':''}>${u}</option>`).join('')}</select>
         </div>
         <div class="trade-kind" id="trade-kind">
           <button class="kind-btn${draft.kind==='essence'?' active':''}" type="button" data-kind="essence">${escapeHtml(tr('trade.kindEssence'))}</button>
           <button class="kind-btn${draft.kind==='item'?' active':''}" type="button" data-kind="item">${escapeHtml(tr('trade.kindItem'))}</button>
         </div>
         <div id="trade-kind-body"></div>
-        <input id="t-note" class="trade-input" type="text" maxlength="120" placeholder="${escapeHtml(tr('trade.note'))}" autocomplete="off">
+        <input id="t-note" class="trade-input" type="text" maxlength="120" placeholder="${escapeHtml(tr('trade.note'))}" aria-label="${escapeHtml(tr('trade.note'))}" autocomplete="off">
         <button id="t-publish" class="trade-publish" type="button">${escapeHtml(tr('trade.publish'))}</button>
         <div id="t-status" class="trade-status"></div>
       </div>`;
@@ -189,8 +193,8 @@
         <button class="auth-back" type="button" data-auth-back>${escapeHtml(tr('trade.authBack'))}</button>
         <h3 class="verify-title">${escapeHtml(tr(isLogin ? 'trade.authLogin' : 'trade.authCreate'))}</h3>
         <p class="verify-intro">${escapeHtml(tr(isLogin ? 'trade.authLoginIntro' : 'trade.authCreateIntro'))}</p>
-        <input id="t-req-pseudo" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.reqPseudo'))}" autocomplete="off">
-        <input id="t-req-contact" class="trade-input" type="text" maxlength="120" placeholder="${escapeHtml(tr('trade.reqContact'))}" autocomplete="off">
+        <input id="t-req-pseudo" class="trade-input" type="text" maxlength="32" placeholder="${escapeHtml(tr('trade.reqPseudo'))}" aria-label="${escapeHtml(tr('trade.reqPseudo'))}" autocomplete="off">
+        <input id="t-req-contact" class="trade-input" type="text" maxlength="120" placeholder="${escapeHtml(tr('trade.reqContact'))}" aria-label="${escapeHtml(tr('trade.reqContact'))}" autocomplete="off">
         <button id="t-req-submit" class="trade-publish" type="button">${escapeHtml(tr('trade.reqSubmit'))}</button>
         <div id="t-req-status" class="trade-status"></div>
       </div>`;
@@ -212,24 +216,24 @@
     if (draft.kind === 'essence'){
       body.innerHTML = `
         <div class="trade-row">
-          <input id="t-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('trade.pickEssence'))}" autocomplete="off">
-          <select id="t-ess-lvl" class="trade-select">${levelOptions([1], 1)}</select>
+          <input id="t-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('trade.pickEssence'))}" aria-label="${escapeHtml(tr('trade.pickEssence'))}" autocomplete="off">
+          <select id="t-ess-lvl" class="trade-select" aria-label="${escapeHtml(tr('levelWord'))}">${levelOptions([1], 1)}</select>
         </div>`;
     } else {
       const chips = draft.item.essences.map((en,i) => `
         <div class="ess-chip">
           <span class="ess-chip-name">${escapeHtml(en.name)}</span>
-          <select class="trade-select" data-item-lvl="${i}">${levelOptions(essLevels(en.name), en.level)}</select>
-          <button class="chip-x" type="button" data-item-rm="${i}" aria-label="×">×</button>
+          <select class="trade-select" data-item-lvl="${i}" aria-label="${escapeHtml(tr('levelWord') + ' — ' + en.name)}">${levelOptions(essLevels(en.name), en.level)}</select>
+          <button class="chip-x" type="button" data-item-rm="${i}" aria-label="${escapeHtml(fmt(tr('removeItem'), {name: en.name}))}" title="${escapeHtml(fmt(tr('removeItem'), {name: en.name}))}">×</button>
         </div>`).join('');
       const addBtn = draft.item.essences.length < 3
-        ? `<input id="t-item-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('trade.addItemEss'))}" autocomplete="off">` : '';
+        ? `<input id="t-item-ess" class="trade-input" type="text" data-esspick placeholder="${escapeHtml(tr('trade.addItemEss'))}" aria-label="${escapeHtml(tr('trade.addItemEss'))}" autocomplete="off">` : '';
       let soul;
       if (draft.item.soul){
         const s = soulByKey[draft.item.soul.type];
         soul = `<div class="soul-chip" style="--soul:${s.color}"><span class="soul-dot"></span><span class="soul-chip-name">${escapeHtml(s.label)}</span>
-          <select class="trade-select" id="t-soul-count">${[1,2,3,4].map(n=>`<option value="${n}"${n===draft.item.soul.count?' selected':''}>×${n}</option>`).join('')}</select>
-          <button class="chip-x" type="button" data-soul-rm aria-label="×">×</button></div>`;
+          <select class="trade-select" id="t-soul-count" aria-label="${escapeHtml(tr('build.soulCount'))}">${[1,2,3,4].map(n=>`<option value="${n}"${n===draft.item.soul.count?' selected':''}>×${n}</option>`).join('')}</select>
+          <button class="chip-x" type="button" data-soul-rm aria-label="${escapeHtml(fmt(tr('removeItem'), {name: s.label}))}" title="${escapeHtml(fmt(tr('removeItem'), {name: s.label}))}">×</button></div>`;
       } else {
         soul = `<div class="soul-picker">${SOULS.map(s=>`<button class="soul-opt" type="button" data-soul-pick="${s.key}" style="--soul:${s.color}"><span class="soul-dot"></span>${escapeHtml(s.label)}</button>`).join('')}</div>`;
       }
@@ -475,8 +479,12 @@
   function switchSubtab(tab){
     if (tab !== 'mine' && tab !== 'others') return;
     tradeTab = tab;
-    document.querySelectorAll('#trade-subtabs .trade-subtab').forEach(b =>
-      b.classList.toggle('active', b.getAttribute('data-subtab') === tab));
+    document.querySelectorAll('#trade-subtabs .trade-subtab').forEach(b => {
+      const on = b.getAttribute('data-subtab') === tab;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;
+    });
     document.querySelectorAll('.trade-panel[data-panel]').forEach(p =>
       p.hidden = p.getAttribute('data-panel') !== tab);
   }
@@ -505,6 +513,23 @@
       if (confirm(tr('trade.confirmDelete'))) FB.db.collection('listings').doc(del.getAttribute('data-del')).delete();
       return;
     }
+  });
+
+  // sub-tabs keyboard: ←/→ (wrapping), Home/End
+  tradeView.addEventListener('keydown', (ev) => {
+    const cur = ev.target.closest && ev.target.closest('[data-subtab]');
+    if (!cur) return;
+    const order = ['mine', 'others'];
+    let i = order.indexOf(cur.getAttribute('data-subtab'));
+    if (ev.key === 'ArrowRight') i = (i + 1) % order.length;
+    else if (ev.key === 'ArrowLeft') i = (i - 1 + order.length) % order.length;
+    else if (ev.key === 'Home') i = 0;
+    else if (ev.key === 'End') i = order.length - 1;
+    else return;
+    ev.preventDefault();
+    switchSubtab(order[i]);
+    const b = byId('trade-subtab-' + order[i]);
+    if (b) b.focus();
   });
 
   tradeView.addEventListener('change', (ev) => {

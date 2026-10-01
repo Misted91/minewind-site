@@ -16,11 +16,12 @@
   /* ---- Texte ---- */
   --text:#edeef2;
   --text-dim:#a2a8b3;
-  --text-faint:#6c717c;
+  --text-faint:#8a8f9a;       /* ≥ 4.5:1 sur toutes les surfaces (petits libellés) */
 
   /* ---- Accent « essence » : or / ambre ---- */
   --accent:#e3b45e;           /* or principal */
   --accent-text:#f2cd88;      /* or clair, pour le texte sur fond sombre */
+  --on-accent:#1a1307;        /* texte posé sur un aplat --accent (boutons pleins) */
   --accent-soft: rgba(227,180,94,0.13);
   --accent-line: rgba(227,180,94,0.42);
   --gold: var(--accent);      /* alias legacy utilisé comme fallback JS */
@@ -30,7 +31,9 @@
   --sigil-spell:#a68bff;      /* sort — arcane */
   --sigil-weapon:#ef6f63;     /* arme — braise */
   --sigil-armor:#57cd8f;      /* armure — jade */
-  --danger:#e8595d;           /* actions destructives / expiration */
+  /* ---- Couleurs d'état (ne pas réutiliser les sigils de type pour ça) ---- */
+  --danger:#ef6b6f;           /* erreurs, actions destructives, expiration */
+  --success:#57cd8f;          /* confirmations, validation, badge vérifié */
 
   /* ---- Élévation ---- */
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
@@ -62,18 +65,20 @@ html[data-theme="light"]{
 
   --text:#1d1a15;
   --text-dim:#5d564a;
-  --text-faint:#8c8578;
+  --text-faint:#6b6458;
 
   --accent:#b7842a;
-  --accent-text:#8a6217;
+  --accent-text:#7d5813;
+  --on-accent:#1d1a15;
   --accent-soft: rgba(183,132,42,0.12);
   --accent-line: rgba(183,132,42,0.40);
-  --gold-bright:#a9791f;
+  --gold-bright:#7d5813;
 
   --sigil-spell:#7c5cf0;
   --sigil-weapon:#d8473c;
   --sigil-armor:#1f9d57;
-  --danger:#cf3b40;
+  --danger:#ae2a30;
+  --success:#0f6a37;
 
   --shadow-sm: 0 1px 2px rgba(60,50,30,0.07);
   --shadow: 0 2px 8px rgba(60,50,30,0.08), 0 14px 34px -20px rgba(60,50,30,0.24);
@@ -142,6 +147,10 @@ html[data-theme="light"] .grain{ opacity:0.02; }
 
 a{ color: var(--accent-text); text-decoration:none; }
 a:hover{ text-decoration:underline; }
+
+/* Visible keyboard focus on every control (mouse clicks don't trigger it).
+   Text fields keep their own ring (outline:none + box-shadow in their sheet). */
+:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
 ::selection{ background: var(--accent-soft); }
 
 /* No blue tap-flash / weird text selection on long-press for tappable UI */

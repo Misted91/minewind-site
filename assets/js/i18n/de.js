@@ -37,6 +37,18 @@ window.__I18N_STRINGS__.de = {
   favFilter: 'Favoriten',
   favEmpty: 'Noch keine Favoriten. Klicke auf den Stern einer Essenz, um sie hinzuzufügen.',
   guideTitle: 'Anfänger-Guide',
+  searchLabel: 'Essenz suchen',
+  tierHint: 'Wähle eine Preisstufe, um ihre Essenzen zu sehen.',
+  tierShow: 'Die {n} Essenzen der Preisstufe {tier} anzeigen',
+  tierNone: 'Noch keine Essenz in dieser Preisstufe',
+  tierChip: 'Preisstufe {tier}',
+  tierClear: 'Preisstufen-Filter entfernen',
+  units: 'd\u00a0=\u00a0Dragon\u00a0Egg · s\u00a0=\u00a0Stack\u00a0(64\u00a0d) · sh\u00a0=\u00a0Shegg\u00a0(1.728\u00a0d)',
+  themeToLight: 'Zum hellen Design wechseln',
+  themeToDark: 'Zum dunklen Design wechseln',
+  langLabel: 'Sprache',
+  tabsLabel: 'Bereiche der Seite',
+  removeItem: '{name} entfernen',
   guide: {
     money: {
       title: 'Währung',
@@ -69,6 +81,7 @@ window.__I18N_STRINGS__.de = {
     inInventory: 'In deinem Inventar',
     setEffect: 'Set-Effekt (über die ganze Ausrüstung gestapelt)',
     setName: 'Set-Name',
+    soulCount: 'Anzahl der Seelen',
     deleteSet: 'Löschen',
     deleteSetConfirm: 'Dieses Set löschen?',
     defaultSetName: 'Set',
@@ -98,7 +111,10 @@ window.__I18N_STRINGS__.de = {
     empty: 'Noch keine Essenzen. Füge die hinzu, die du im Spiel besitzt.',
     count: 'Essenzen',
     estValue: 'Geschätzter Wert (ungefähr, in Stacks)',
-    remove: 'Entfernen'
+    remove: 'Entfernen',
+    essenceLabel: 'Essenz',
+    qtyDec: 'Menge verringern',
+    qtyInc: 'Menge erhöhen'
   },
   trade: {
     tab: 'Trade',
@@ -161,6 +177,7 @@ window.__I18N_STRINGS__.de = {
     modPseudoTaken: 'Name bereits vergeben',
     modTab: 'Moderation',
     modPanel: 'Moderation',
+    modIntro: 'Prüfe Verifizierungsanfragen, verwalte gebannte Konten und Moderatoren.',
     modRequests: 'Ausstehende Anfragen',
     modNoRequests: 'Keine Anfragen.',
     modApprove: 'Genehmigen',

@@ -103,12 +103,17 @@
     const verifiedTools = `
         <div class="mod-section-title">${escapeHtml(tr('trade.modVerifiedUsers'))}</div>
         <div class="trade-row">
-          <input id="t-mod-verified-search" class="trade-input" type="text" maxlength="64" placeholder="${escapeHtml(tr('trade.modSearchPlaceholder'))}" autocomplete="off" value="${escapeHtml(verifiedFilter)}">
+          <input id="t-mod-verified-search" class="trade-input" type="text" maxlength="64" placeholder="${escapeHtml(tr('trade.modSearchPlaceholder'))}" aria-label="${escapeHtml(tr('trade.modSearchPlaceholder'))}" autocomplete="off" value="${escapeHtml(verifiedFilter)}">
         </div>
         <div class="mod-list">${renderVerifiedList(uid)}</div>`;
     el.innerHTML = `
+      <div class="view-head">
+        <div class="view-head-main">
+          <h2 class="view-title">${escapeHtml(tr('trade.modPanel'))}</h2>
+          <p class="view-intro">${escapeHtml(tr('trade.modIntro'))}</p>
+        </div>
+      </div>
       <div class="mod-panel">
-        <h3 class="mod-panel-title">${escapeHtml(tr('trade.modPanel'))}</h3>
         <div class="mod-section-title">${escapeHtml(tr('trade.modRequests'))}</div>
         <div class="mod-list">${reqs}</div>
         ${ownerTools}

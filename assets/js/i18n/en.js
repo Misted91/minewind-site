@@ -37,6 +37,18 @@ window.__I18N_STRINGS__.en = {
   favFilter: 'Favorites',
   favEmpty: 'No favorites yet. Click the star on an essence to add it.',
   guideTitle: 'Beginner guide',
+  searchLabel: 'Search for an essence',
+  tierHint: 'Pick a tier to see its essences.',
+  tierShow: 'Show the {n} essences in tier {tier}',
+  tierNone: 'No essence in this tier yet',
+  tierChip: 'Tier {tier}',
+  tierClear: 'Clear the tier filter',
+  units: 'd\u00a0=\u00a0dragon\u00a0egg · s\u00a0=\u00a0stack\u00a0(64\u00a0d) · sh\u00a0=\u00a0shegg\u00a0(1,728\u00a0d)',
+  themeToLight: 'Switch to light theme',
+  themeToDark: 'Switch to dark theme',
+  langLabel: 'Language',
+  tabsLabel: 'Site sections',
+  removeItem: 'Remove {name}',
   guide: {
     money: {
       title: 'Currency',
@@ -69,6 +81,7 @@ window.__I18N_STRINGS__.en = {
     inInventory: 'In your inventory',
     setEffect: 'Set effect (stacked across the loadout)',
     setName: 'Set name',
+    soulCount: 'Number of souls',
     deleteSet: 'Delete',
     deleteSetConfirm: 'Delete this set?',
     defaultSetName: 'Set',
@@ -98,7 +111,10 @@ window.__I18N_STRINGS__.en = {
     empty: 'No essences yet. Add the ones you own in game.',
     count: 'essences',
     estValue: 'Estimated value (approximate, in stacks)',
-    remove: 'Remove'
+    remove: 'Remove',
+    essenceLabel: 'Essence',
+    qtyDec: 'Decrease quantity',
+    qtyInc: 'Increase quantity'
   },
   trade: {
     tab: 'Trade',
@@ -161,6 +177,7 @@ window.__I18N_STRINGS__.en = {
     modPseudoTaken: 'username already taken',
     modTab: 'Moderation',
     modPanel: 'Moderation',
+    modIntro: 'Review verification requests, manage banned accounts and moderators.',
     modRequests: 'Pending requests',
     modNoRequests: 'No requests.',
     modApprove: 'Approve',

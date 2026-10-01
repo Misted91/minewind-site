@@ -71,13 +71,22 @@
   // tier code -> observed price (from the legend), to show prices instead of tier letters
   const tierValue = {};
   tierLegend.forEach(row => { tierValue[row.tier] = row.value; });
+  // how many essences are priced at each tier (on any level) — tiers nobody reaches are disabled
+  const tierCount = {};
+  essences.forEach(e => {
+    new Set((e.prices || []).map(p => (p || '').trim()).filter(p => tierValue[p] != null))
+      .forEach(t => { tierCount[t] = (tierCount[t] || 0) + 1; });
+  });
   function renderLegend(){
-    legendGrid.innerHTML = tierLegend.map(row => `
-      <div class="legend-item">
+    legendGrid.innerHTML = tierLegend.map(row => {
+      const n = tierCount[row.tier] || 0;
+      const label = n ? fmt(tr('tierShow'), {n: n, tier: row.tier}) : tr('tierNone');
+      return `
+      <button class="legend-item" type="button" data-tier="${escapeHtml(row.tier)}" title="${escapeHtml(label)}"${n ? '' : ' disabled'}>
         <span class="legend-tier">${escapeHtml(row.tier)}</span>
         <span class="legend-value">${escapeHtml(translateLegend(row.value))}</span>
-      </div>
-    `).join('');
+      </button>`;
+    }).join('');
   }
 
   // ---- search index: precompute searchable string per essence ----
@@ -111,8 +120,10 @@
   const filterType = new Set();
   const filterSection = new Set();
   let favView = false;
+  let filterTier = null; // price tier picked in the legend (e.g. "SS"), or null
   function typesOfE(e){ return (e.type||'').split(',').map(s => s.trim()).filter(Boolean); }
-  function anyFilter(){ return filterType.size || filterSection.size || favView; }
+  function hasTier(e, tier){ return (e.prices || []).some(p => (p || '').trim() === tier); }
+  function anyFilter(){ return filterType.size || filterSection.size || favView || filterTier; }
 
   function escapeHtml(s){
     return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -130,15 +141,15 @@
       return `<div class="price-row"><div class="price-pill note">${escapeHtml(levels[1])}</div></div>`;
     }
 
-    let pills = levels.map((val, i) => {
+    const pills = levels.map((val, i) => {
       const trimmed = (val||'').trim();
-      if (!trimmed){
-        return `<div class="price-pill empty"><span class="lvl-label">${levelLabels[i]}</span><span class="lvl-value">—</span></div>`;
-      }
+      // a level without any observed price isn't shown (it's almost always a level the essence doesn't have)
+      if (!trimmed) return '';
       // known tier code -> show the observed price instead of the tier letter
       const mapped = tierValue[trimmed];
       if (mapped != null){
-        return `<div class="price-pill filled" title="${escapeHtml(trimmed)}"><span class="lvl-label">${levelLabels[i]}</span><span class="lvl-value">${escapeHtml(translateLegend(mapped))}</span></div>`;
+        const match = trimmed === filterTier ? ' match' : '';
+        return `<div class="price-pill filled${match}" title="${escapeHtml(trimmed)}"><span class="lvl-label">${levelLabels[i]}</span><span class="lvl-value">${escapeHtml(translateLegend(mapped))}</span></div>`;
       }
       // long free-text values (rare anomalies) get their own note styling
       if (trimmed.length > 10){
@@ -147,7 +158,8 @@
       return `<div class="price-pill filled"><span class="lvl-label">${levelLabels[i]}</span><span class="lvl-value">${escapeHtml(trimmed)}</span></div>`;
     });
 
-    return `<div class="price-row">${pills.join('')}</div>`;
+    const html = pills.join('');
+    return html ? `<div class="price-row">${html}</div>` : '';
   }
 
   function renderCard(e, idx){
@@ -180,40 +192,38 @@
       ? `<div><div class="detail-block-label">${escapeHtml(tr('labelSoul'))}</div><div class="soul-note">${escapeHtml(e.soul)}</div></div>`
       : '';
 
-    const sectionNote = e.section
-      ? `<div><div class="detail-block-label">${escapeHtml(tr('labelSection'))}</div><div class="soul-note">${escapeHtml(e.section)}</div></div>`
-      : '';
-
     const levelsRangeNote = e.levelsRange
       ? `<div><div class="detail-block-label">${escapeHtml(tr('labelLevels'))}</div><div class="soul-note">${escapeHtml(tr('levelWord'))} ${escapeHtml(e.levelsRange)}</div></div>`
       : '';
 
-    const detailInner = `${levelsRangeNote}${sectionNote}${soulNote}${aliasTags}`.trim();
+    // (la catégorie de clé est déjà affichée sous le nom : pas de doublon dans les détails)
+    const detailInner = `${levelsRangeNote}${soulNote}${aliasTags}`.trim();
     const hasDetail = detailInner.length > 0;
+    const expanded = isOpen && hasDetail;
 
-    // chevron indiquant qu'on peut déplier la carte
+    // chevron : vrai bouton (clavier + lecteurs d'écran) ; un clic n'importe où sur la carte marche aussi
     const caret = hasDetail
-      ? `<span class="card-caret" aria-hidden="true" title="${escapeHtml(tr('flipDetails'))}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`
+      ? `<button class="card-caret" type="button" aria-expanded="${expanded}" aria-controls="card-detail-${idx}" aria-label="${escapeHtml(tr('flipDetails') + ' — ' + e.name)}" title="${escapeHtml(tr('flipDetails'))}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>`
       : '';
 
     // section de détails, dépliée en place au clic (pas de flip 3D)
     const detail = hasDetail
-      ? `<div class="card-detail"><div class="detail-clip"><div class="detail-inner">${detailInner}</div></div></div>`
+      ? `<div class="card-detail" id="card-detail-${idx}"><div class="detail-clip"><div class="detail-inner">${detailInner}</div></div></div>`
       : '';
 
     return `
-      <article class="essence-card${hasDetail ? ' has-detail' : ''}${(isOpen && hasDetail) ? ' open' : ''}" data-key="${escapeHtml(key)}" style="--type-color:${color}">
+      <article class="essence-card${hasDetail ? ' has-detail' : ''}${expanded ? ' open' : ''}" data-key="${escapeHtml(key)}" style="--type-color:${color}">
         <div class="card-top">
           <div>
             <div class="card-heading">
-              <span class="card-name">${escapeHtml(e.name)}</span>
+              <h3 class="card-name">${escapeHtml(e.name)}</h3>
               <span class="card-types">${typeBadges}</span>
             </div>
             ${e.section ? `<div class="card-section">${escapeHtml(e.section)}</div>` : ''}
           </div>
           <div class="card-top-actions">
             ${caret}
-            <button class="fav-btn${favorites.has(key)?' active':''}" type="button" data-fav="${escapeHtml(key)}" title="${escapeHtml(tr('favTitle'))}" aria-label="favorite">${favorites.has(key) ? ICONS.favOn : ICONS.favOff}</button>
+            <button class="fav-btn${favorites.has(key)?' active':''}" type="button" data-fav="${escapeHtml(key)}" title="${escapeHtml(tr('favTitle'))}" aria-label="${escapeHtml(tr('favTitle') + ' — ' + e.name)}" aria-pressed="${favorites.has(key)}">${favorites.has(key) ? ICONS.favOn : ICONS.favOff}</button>
           </div>
         </div>
         ${e.description ? `<p class="card-desc">${escapeHtml(e.description)}</p>` : ''}
@@ -257,25 +267,33 @@
     if (favView) list = list.filter(e => favorites.has(e.name));
     if (filterType.size) list = list.filter(e => typesOfE(e).some(t => filterType.has(t)));
     if (filterSection.size) list = list.filter(e => filterSection.has(e.section));
+    if (filterTier) list = list.filter(e => hasTier(e, filterTier));
     return list;
   }
 
   const filterBar = document.getElementById('filter-bar');
   function renderFilters(){
-    const fav = `<button class="filter-chip fav${favView?' active':''}" type="button" data-filter="fav">${favView?ICONS.favOn:ICONS.favOff}<span>${escapeHtml(tr('favFilter'))}${favorites.size?` (${favorites.size})`:''}</span></button>`;
+    let tier = '';
+    if (filterTier){
+      const chip = `${fmt(tr('tierChip'), {tier: filterTier})} · ${translateLegend(tierValue[filterTier] || '')}`;
+      tier = `<button class="filter-chip active tier" type="button" data-tier-clear title="${escapeHtml(tr('tierClear'))}" aria-label="${escapeHtml(tr('tierClear') + ' (' + chip + ')')}"><span>${escapeHtml(chip)}</span><span class="chip-close" aria-hidden="true">×</span></button><span class="filter-sep"></span>`;
+    }
+    const fav = `<button class="filter-chip fav${favView?' active':''}" type="button" data-filter="fav" aria-pressed="${favView}">${favView?ICONS.favOn:ICONS.favOff}<span>${escapeHtml(tr('favFilter'))}${favorites.size?` (${favorites.size})`:''}</span></button>`;
     const types = TYPE_KEYS.map(t =>
-      `<button class="filter-chip${filterType.has(t)?' active':''}" type="button" data-type="${t}">${typeIcon[t]}<span>${escapeHtml(tr(typeLabelKey[t]))}</span></button>`
+      `<button class="filter-chip${filterType.has(t)?' active':''}" type="button" data-type="${t}" aria-pressed="${filterType.has(t)}">${typeIcon[t]}<span>${escapeHtml(tr(typeLabelKey[t]))}</span></button>`
     ).join('');
     const sections = SECTIONS.map(sec =>
-      `<button class="filter-chip${filterSection.has(sec)?' active':''}" type="button" data-section="${escapeHtml(sec)}">${escapeHtml(sectionLabel(sec))}</button>`
+      `<button class="filter-chip${filterSection.has(sec)?' active':''}" type="button" data-section="${escapeHtml(sec)}" aria-pressed="${filterSection.has(sec)}">${escapeHtml(sectionLabel(sec))}</button>`
     ).join('');
-    filterBar.innerHTML = fav + '<span class="filter-sep"></span>' + types + '<span class="filter-sep"></span>' + sections;
+    filterBar.innerHTML = tier + fav + '<span class="filter-sep"></span>' + types + '<span class="filter-sep"></span>' + sections;
   }
 
   function render(){
     renderFilters();
     const hasQ = !!searchInput.value.trim();
-    if (!hasQ && !anyFilter()){
+    const idle = !hasQ && !anyFilter();
+    searchCount.classList.toggle('is-idle', idle);
+    if (idle){
       idlePanel.style.display = '';
       resultsEl.innerHTML = '';
       searchCount.textContent = `${essences.length} ${tr('essencesWord')}`;
@@ -302,13 +320,33 @@
   }
 
   filterBar.addEventListener('click', (ev) => {
-    const c = ev.target.closest('[data-filter],[data-type],[data-section]');
+    const c = ev.target.closest('[data-filter],[data-type],[data-section],[data-tier-clear]');
     if (!c) return;
-    if (c.hasAttribute('data-filter')){ favView = !favView; }
+    if (c.hasAttribute('data-tier-clear')){ filterTier = null; }
+    else if (c.hasAttribute('data-filter')){ favView = !favView; }
     else if (c.hasAttribute('data-type')){ const t = c.getAttribute('data-type'); filterType.has(t) ? filterType.delete(t) : filterType.add(t); }
     else if (c.hasAttribute('data-section')){ const s = c.getAttribute('data-section'); filterSection.has(s) ? filterSection.delete(s) : filterSection.add(s); }
     lastRandom = null;
     render();
+  });
+
+  // smooth scrolling, unless the visitor asked for reduced motion
+  function scrollBehavior(){
+    return (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth';
+  }
+
+  // legend tile -> list the essences priced at that tier
+  const searchShell = document.querySelector('.search-shell');
+  legendGrid.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-tier]');
+    if (!b || b.disabled) return;
+    filterTier = b.getAttribute('data-tier');
+    lastRandom = null;
+    render();
+    // on phones the legend sits below the fold: bring the search + active filter back into view
+    if (searchShell && searchShell.getBoundingClientRect().top < 0){
+      searchShell.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+    }
   });
 
   function rerollBar(){
@@ -337,6 +375,8 @@
     openCardKey = willOpen ? key : null;
     // pas de re-render : on bascule la classe, la hauteur s'anime en CSS (grid-rows)
     card.classList.toggle('open', willOpen);
+    const caretBtn = card.querySelector('.card-caret');
+    if (caretBtn) caretBtn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
   });
 
   const RANDOM_POOLS = {
@@ -358,7 +398,7 @@
     searchInput.value = pick.name;
     openCardKey = pick.name;
     render();
-    resultsEl.scrollIntoView({ behavior:'smooth', block:'start' });
+    resultsEl.scrollIntoView({ behavior: scrollBehavior(), block:'start' });
   }
 
   document.getElementById('random-btn').addEventListener('click', () => pickRandom('all'));
@@ -377,7 +417,9 @@
     document.documentElement.setAttribute('data-theme', theme);
     // show the icon of the theme you'll switch TO
     themeToggle.innerHTML = theme === 'dark' ? ICONS.sun : ICONS.moon;
-    themeToggle.setAttribute('title', theme === 'dark' ? 'Light theme' : 'Dark theme');
+    const label = tr(theme === 'dark' ? 'themeToLight' : 'themeToDark');
+    themeToggle.setAttribute('title', label);
+    themeToggle.setAttribute('aria-label', label);
   }
   themeToggle.addEventListener('click', () => {
     theme = theme === 'dark' ? 'light' : 'dark';
@@ -422,7 +464,7 @@
   const langSwitch = document.getElementById('lang-switch');
   function buildLangSwitch(){
     langSwitch.innerHTML = I18N.langs.map(l =>
-      `<button class="lang-btn${l.code === lang ? ' active' : ''}" data-lang="${l.code}" title="${escapeHtml(l.name)}">${escapeHtml(l.label)}</button>`
+      `<button class="lang-btn${l.code === lang ? ' active' : ''}" type="button" data-lang="${l.code}" lang="${l.code}" title="${escapeHtml(l.name)}" aria-label="${escapeHtml(l.name)}" aria-pressed="${l.code === lang}">${escapeHtml(l.label)}</button>`
     ).join('');
   }
   function applyStatic(){
@@ -434,9 +476,13 @@
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       el.setAttribute('placeholder', tr(el.getAttribute('data-i18n-placeholder')));
     });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+      el.setAttribute('aria-label', tr(el.getAttribute('data-i18n-aria-label')));
+    });
   }
   function applyLanguage(){
     applyStatic();
+    applyTheme();
     buildLangSwitch();
     renderMeta();
     renderLegend();

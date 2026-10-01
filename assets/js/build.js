@@ -24,6 +24,7 @@
   function escapeHtml(s){
     return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
+  function fmt(str, vars){ return String(str).replace(/\{(\w+)\}/g, (m,k) => (vars && vars[k] != null) ? vars[k] : m); }
   function norm(s){
     return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
   }
@@ -337,6 +338,17 @@
     const slot = active().slots[key];
     const name = tr('build.slots.' + key);
 
+    // nothing on this piece yet (and no picker open): just the two add buttons
+    if (!slot.essences.length && !slot.soul && !(openPicker && openPicker.slot === key)){
+      return `<div class="slot is-empty">
+        <div class="slot-name">${escapeHtml(name)}</div>
+        <div class="chips">
+          <button class="add-chip" type="button" data-add-ess="${key}">+ ${escapeHtml(tr('build.addEssence'))}</button>
+          <button class="add-chip" type="button" data-add-soul="${key}">+ ${escapeHtml(tr('build.addSoul'))}</button>
+        </div>
+      </div>`;
+    }
+
     // essences
     let essChips = slot.essences.map((entry, i) => {
       const lvls = levelsOf(entry.name);
@@ -349,8 +361,8 @@
       ).join('');
       return `<div class="ess-chip">
         <span class="ess-chip-name">${escapeHtml(entry.name)}</span>
-        <select class="lvl-select" data-slot="${key}" data-idx="${i}" title="${escapeHtml(tr('build.level'))}">${opts}</select>
-        <button class="chip-x" type="button" data-rm-ess="${key}" data-idx="${i}" aria-label="×">×</button>
+        <select class="lvl-select" data-slot="${key}" data-idx="${i}" title="${escapeHtml(tr('build.level'))}" aria-label="${escapeHtml(tr('levelWord') + ' — ' + entry.name)}">${opts}</select>
+        <button class="chip-x" type="button" data-rm-ess="${key}" data-idx="${i}" aria-label="${escapeHtml(fmt(tr('removeItem'), {name: entry.name}))}" title="${escapeHtml(fmt(tr('removeItem'), {name: entry.name}))}">×</button>
       </div>`;
     }).join('');
     if (slot.essences.length < MAX_ESS){
@@ -379,8 +391,8 @@
       soulChips = `<div class="soul-chip" style="--soul:${s.color}">
         <span class="soul-dot"></span>
         <span class="soul-chip-name">${escapeHtml(s.label)}</span>
-        <select class="soul-count" data-slot="${key}">${countOpts}</select>
-        <button class="chip-x" type="button" data-rm-soul="${key}" aria-label="×">×</button>
+        <select class="soul-count" data-slot="${key}" aria-label="${escapeHtml(tr('build.soulCount'))}">${countOpts}</select>
+        <button class="chip-x" type="button" data-rm-soul="${key}" aria-label="${escapeHtml(fmt(tr('removeItem'), {name: s.label}))}" title="${escapeHtml(fmt(tr('removeItem'), {name: s.label}))}">×</button>
       </div>`;
     } else {
       soulChips = `<button class="add-chip" type="button" data-add-soul="${key}">+ ${escapeHtml(tr('build.addSoul'))}</button>`;
@@ -556,20 +568,26 @@
   function renderBuild(){
     const slotsHtml = SLOTS.map(slotMarkup).join('');
     const setTabs = builds.sets.map(s =>
-      `<button class="set-tab${s.id===builds.activeId?' active':''}" type="button" data-set-id="${s.id}">${escapeHtml(s.name || '—')}</button>`
+      `<button class="set-tab${s.id===builds.activeId?' active':''}" type="button" data-set-id="${s.id}" aria-pressed="${s.id===builds.activeId}">${escapeHtml(s.name || '—')}</button>`
     ).join('');
     const canDelete = builds.sets.length > 1;
     buildInner.innerHTML = `
+      <div class="view-head">
+        <div class="view-head-main">
+          <h2 class="view-title">${escapeHtml(tr('build.heading'))}</h2>
+          <p class="view-intro">${escapeHtml(tr('build.intro'))}</p>
+        </div>
+      </div>
       <div class="sets-bar">
         ${setTabs}
         <button class="set-add" type="button" data-set-add>+ ${escapeHtml(tr('build.newSet'))}</button>
       </div>
-      <div class="build-head">
-        <div class="build-head-main">
+      <div class="set-toolbar">
+        <label class="set-name-field">
+          <span class="set-name-label">${escapeHtml(tr('build.setName'))}</span>
           <input class="set-name-input" id="set-name" type="text" maxlength="40" value="${escapeHtml(active().name)}" placeholder="${escapeHtml(tr('build.setName'))}" autocomplete="off" spellcheck="false">
-          <p class="build-intro">${escapeHtml(tr('build.intro'))}</p>
-        </div>
-        <div class="build-head-actions">
+        </label>
+        <div class="set-actions">
           <button class="build-reset accent" type="button" id="set-share">${escapeHtml(tr('build.share'))}</button>
           ${canDelete ? `<button class="build-reset danger" type="button" id="set-delete">${escapeHtml(tr('build.deleteSet'))}</button>` : ''}
           <button class="build-reset" type="button" id="build-reset">${escapeHtml(tr('build.reset'))}</button>
@@ -718,7 +736,14 @@
     if (tradeView) tradeView.hidden = tab !== 'trade';
     if (modView) modView.hidden = tab !== 'mod';
     if (invView) invView.hidden = tab !== 'inv';
-    tabs.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tab));
+    tabs.querySelectorAll('.tab').forEach(b => {
+      const on = b.getAttribute('data-tab') === tab;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+      b.tabIndex = on ? 0 : -1;   // roving focus: Tab enters the bar, arrows move inside it
+    });
+    // drives the compact hero on the tool tabs (chrome.css); also set before paint in index.html
+    document.documentElement.setAttribute('data-tab', tab);
     localStorage.setItem(TAB_KEY, tab);
     if (tab === 'build' && !built){ built = true; renderBuild(); }
     document.dispatchEvent(new CustomEvent('tabchange', { detail: tab }));
@@ -726,6 +751,21 @@
   tabs.addEventListener('click', (ev) => {
     const b = ev.target.closest('.tab');
     if (b) setTab(b.getAttribute('data-tab'));
+  });
+  // keyboard: ←/→ (wrapping), Home/End move to and open the neighbouring visible tab
+  tabs.addEventListener('keydown', (ev) => {
+    const cur = ev.target.closest('.tab');
+    if (!cur) return;
+    const list = Array.from(tabs.querySelectorAll('.tab')).filter(b => !b.hidden);
+    let i = list.indexOf(cur);
+    if (ev.key === 'ArrowRight') i = (i + 1) % list.length;
+    else if (ev.key === 'ArrowLeft') i = (i - 1 + list.length) % list.length;
+    else if (ev.key === 'Home') i = 0;
+    else if (ev.key === 'End') i = list.length - 1;
+    else return;
+    ev.preventDefault();
+    setTab(list[i].getAttribute('data-tab'));
+    list[i].focus();
   });
   const imported = importFromHash();
   const savedTab = localStorage.getItem(TAB_KEY);

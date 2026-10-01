@@ -1,7 +1,8 @@
 /*
    inventory.css — Inventory tab: owned in-game essences (add form, list, stats)
-   Reuses .trade-input/.trade-select/.trade-publish (trade.css) and
-   .buy-name/.buy-lvl/.buy-price/.stat-own/.stat-cost/.chip-x (build.css).
+   Header uses the shared .view-head template (chrome.css). Reuses
+   .trade-field/.trade-sub/.trade-input/.trade-select/.trade-publish (trade.css)
+   and .buy-name/.buy-lvl/.buy-price/.stat-own/.stat-cost/.chip-x (build.css).
 */
 
 .inv-panel{
@@ -10,19 +11,18 @@
   border-radius: var(--radius);
   padding:18px;
 }
-.inv-head{
-  display:flex; align-items:flex-start; justify-content:space-between;
-  gap:12px; flex-wrap:wrap; margin-bottom:14px;
-}
-.inv-title{ margin:0 0 4px; font-size:17px; font-weight:600; color: var(--text); }
-.inv-intro{ margin:0; font-size:13px; color: var(--text-dim); }
-.inv-stats{ display:flex; gap:8px; font-family: var(--font-mono); font-size:11.5px; align-items:center; }
+.inv-stats{ font-family: var(--font-mono); font-size:11.5px; }
 .inv-empty{ margin:0; font-size:13.5px; color: var(--text-dim); }
 
-.inv-add{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
-.inv-add .trade-input{ flex:2 1 220px; min-width:0; }
-.inv-add .trade-select{ flex:1 1 140px; min-width:0; }
-.inv-add .trade-publish{ flex:0 0 auto; }
+/* add form: labelled essence + level fields, button aligned on the fields */
+.inv-add{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:16px; }
+.inv-field-ess{ flex:1 1 240px; min-width:0; }
+.inv-field-lvl{ flex:0 0 172px; min-width:0; }
+.inv-add .trade-input,
+.inv-add .trade-select,
+.inv-add .trade-publish{ height:40px; }
+.inv-add .trade-select{ font-size:12.5px; padding:0 8px; border-radius:8px; }
+.inv-add .trade-publish{ flex:0 0 auto; align-self:flex-end; padding-top:0; padding-bottom:0; }
 
 .inv-list{ display:flex; flex-direction:column; gap:1px; }
 .inv-row{
@@ -33,6 +33,7 @@
 
 .inv-qty{ display:flex; align-items:center; gap:6px; }
 .inv-step{
+  display:inline-flex; align-items:center; justify-content:center; padding:0;
   font-family: var(--font-mono); font-size:13px; line-height:1;
   color: var(--text-dim);
   background: var(--panel-2);

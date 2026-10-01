@@ -7,10 +7,13 @@ sert le dossier. Pas d'étape de compilation.
 ## Structure
 
 - `index.html` — page unique. Charge les CSS puis les JS **dans un ordre qui
-  compte** (voir plus bas).
+  compte** (voir plus bas). Un script inline dans `<head>` pose `data-theme` et
+  `data-tab` sur `<html>` avant le premier rendu (pas de flash) ; `build.js`
+  garde `data-tab` à jour.
 - `assets/css/` — styles découpés par responsabilité :
   - `base.css` : variables (`:root`), thèmes clair/sombre, reset, layout, icônes
-  - `chrome.css` : bouton thème, sélecteur de langue, hero, onglets, footer
+  - `chrome.css` : bouton thème, sélecteur de langue, hero (compact hors Codex
+    via `html[data-tab]`), onglets, en-tête commun des onglets (`.view-head`), footer
   - `codex.css` : onglet Codex (recherche, légende, boutons aléatoires, cartes)
   - `build.css` : onglet Équipement (sets, slots, âmes, liste d'achat)
   - `inventory.css` : onglet Inventaire (essences possédées en jeu)
@@ -54,7 +57,8 @@ sert le dossier. Pas d'étape de compilation.
   `codexlang`.
 - **Cache-busting** : les URLs d'assets portent `?v=AAAAMMJJx`. Incrémenter ce
   suffixe (dans `index.html`) à chaque modif d'un fichier pour forcer le
-  rechargement navigateur.
+  rechargement navigateur. `legal.html` charge aussi `base.css` : y reporter la
+  même version.
 - **Persistance** : `localStorage` (`minewind-theme`, `minewind-lang`,
   `minewind-tab`, `minewind-builds`, `minewind-inventory`). `build.js` migre l'ancien format
   `minewind-build` → `minewind-builds`.

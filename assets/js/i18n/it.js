@@ -37,6 +37,18 @@ window.__I18N_STRINGS__.it = {
   favFilter: 'Preferiti',
   favEmpty: "Ancora nessun preferito. Clicca sulla stella di un'essenza per aggiungerla.",
   guideTitle: 'Guida per principianti',
+  searchLabel: "Cerca un'essenza",
+  tierHint: 'Scegli una fascia di prezzo per vederne le essenze.',
+  tierShow: 'Mostra le {n} essenze della fascia {tier}',
+  tierNone: 'Ancora nessuna essenza in questa fascia',
+  tierChip: 'Fascia {tier}',
+  tierClear: 'Rimuovi il filtro di fascia',
+  units: 'd\u00a0=\u00a0dragon\u00a0egg · s\u00a0=\u00a0stack\u00a0(64\u00a0d) · sh\u00a0=\u00a0shegg\u00a0(1.728\u00a0d)',
+  themeToLight: 'Passa al tema chiaro',
+  themeToDark: 'Passa al tema scuro',
+  langLabel: 'Lingua',
+  tabsLabel: 'Sezioni del sito',
+  removeItem: 'Rimuovi {name}',
   guide: {
     money: {
       title: 'La valuta',
@@ -69,6 +81,7 @@ window.__I18N_STRINGS__.it = {
     inInventory: 'Nel tuo inventario',
     setEffect: "Effetto del set (cumulato sull'intero equipaggiamento)",
     setName: 'Nome del set',
+    soulCount: 'Numero di anime',
     deleteSet: 'Elimina',
     deleteSetConfirm: 'Eliminare questo set?',
     defaultSetName: 'Set',
@@ -98,7 +111,10 @@ window.__I18N_STRINGS__.it = {
     empty: 'Nessuna essenza per ora. Aggiungi quelle che possiedi in gioco.',
     count: 'essenze',
     estValue: 'Valore stimato (approssimativo, in stack)',
-    remove: 'Rimuovi'
+    remove: 'Rimuovi',
+    essenceLabel: 'Essenza',
+    qtyDec: 'Diminuisci la quantità',
+    qtyInc: 'Aumenta la quantità'
   },
   trade: {
     tab: 'Trade',
@@ -161,6 +177,7 @@ window.__I18N_STRINGS__.it = {
     modPseudoTaken: 'nome già in uso',
     modTab: 'Moderazione',
     modPanel: 'Moderazione',
+    modIntro: 'Esamina le richieste di verifica, gestisci gli account banditi e i moderatori.',
     modRequests: 'Richieste in attesa',
     modNoRequests: 'Nessuna richiesta.',
     modApprove: 'Approva',

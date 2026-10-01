@@ -117,7 +117,7 @@
       if (menu && !menu.hidden && !ev.target.closest('.selpick-menu')) close();
       return;
     }
-    if (coarse) return;                 // let touch devices use the native picker
+    if (coarse || sel.disabled) return; // touch devices keep the native picker; disabled stays shut
     ev.preventDefault();                // suppress the native option popup + focus jump
     if (curSel === sel){ close(); return; }
     if (curSel) close();
@@ -127,7 +127,7 @@
 
   document.addEventListener('keydown', function(ev){
     var sel = matchSel(ev.target);
-    if (!sel || coarse) return;
+    if (!sel || coarse || sel.disabled) return;
     var isOpen = menu && !menu.hidden && curSel === sel;
     if (!isOpen){
       if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp' || ev.key === 'Enter' || ev.key === ' '){
